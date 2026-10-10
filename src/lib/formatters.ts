@@ -38,3 +38,7 @@ export function formatCompact(value: number): string {
 export function formatShareCount(value: number): string {
   return new Intl.NumberFormat('en-US').format(value);
 }
+
+export function formatTradeCount(value: number): string {
+  return `${value} ${value === 1 ? 'trade' : 'trades'}`;
+}

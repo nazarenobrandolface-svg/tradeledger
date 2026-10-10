@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, getDay, isSameMonth, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatTradeCount } from '@/lib/formatters';
 import type { DayPnl } from '@/lib/metrics';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -129,7 +129,9 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
                         >
                           {formatCurrency(pnl, currency)}
                         </div>
-                        <div className="text-[9px] text-muted-foreground">{trades}t</div>
+                        <div className="text-[9px] text-muted-foreground">
+                          {formatTradeCount(trades)}
+                        </div>
                       </>
                     )}
                   </button>
@@ -152,7 +154,9 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
                   {weekTrades > 0 ? formatCurrency(weekTotal, currency) : ''}
                 </div>
                 {weekTrades > 0 && (
-                  <div className="text-[9px] text-muted-foreground">{weekTrades}t</div>
+                  <div className="text-[9px] text-muted-foreground">
+                    {formatTradeCount(weekTrades)}
+                  </div>
                 )}
               </div>
             </>
@@ -162,7 +166,7 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
 
       <div className="mt-3 flex items-center justify-between border-t pt-3 text-sm">
         <span className="text-muted-foreground">
-          {monthTrades} trades in {format(month, 'MMMM')}
+          {formatTradeCount(monthTrades)} in {format(month, 'MMMM')}
         </span>
         <span
           className={cn(

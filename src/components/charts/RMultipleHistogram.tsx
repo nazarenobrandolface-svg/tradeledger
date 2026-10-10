@@ -38,8 +38,11 @@ export function RMultipleHistogram({ data, height = 250 }: RMultipleHistogramPro
             backgroundColor: 'hsl(var(--popover))',
             border: '1px solid hsl(var(--border))',
             borderRadius: '8px',
-            fontSize: '12px'
+            fontSize: '12px',
+            color: 'hsl(var(--popover-foreground))'
           }}
+          labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+          itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
           formatter={(value: number | string) => [value, 'Trades']}
           labelFormatter={(label: string) => `${Number(label).toFixed(1)}R`}
         />

@@ -46,8 +46,11 @@ export function DailyPnlBarChart({ data, height = 250, currency = 'USD' }: Daily
             backgroundColor: 'hsl(var(--popover))',
             border: '1px solid hsl(var(--border))',
             borderRadius: '8px',
-            fontSize: '12px'
+            fontSize: '12px',
+            color: 'hsl(var(--popover-foreground))'
           }}
+          labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+          itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
           formatter={(value: number | string) => [formatCurrency(Number(value), currency), 'Net P&L']}
         />
         <Bar dataKey="netPnl" radius={[4, 4, 0, 0]}>

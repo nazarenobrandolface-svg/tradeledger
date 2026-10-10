@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { MobileNav } from './MobileNav';
@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 export function AppShell() {
   const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed);
+  const location = useLocation();
 
   return (
     <TooltipProvider>
@@ -22,7 +23,9 @@ export function AppShell() {
         >
           <TopBar />
           <main className="p-4 pb-20 md:p-6 md:pb-6">
-            <Outlet />
+            <div key={location.pathname} className="animate-page-in motion-reduce:animate-none">
+              <Outlet />
+            </div>
           </main>
         </div>
         <MobileNav />

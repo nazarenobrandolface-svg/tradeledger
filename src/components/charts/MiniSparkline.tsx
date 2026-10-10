@@ -26,8 +26,11 @@ export function MiniSparkline({
             backgroundColor: 'hsl(var(--popover))',
             border: '1px solid hsl(var(--border))',
             borderRadius: '6px',
-            fontSize: '11px'
+            fontSize: '11px',
+            color: 'hsl(var(--popover-foreground))'
           }}
+          labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+          itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
           labelFormatter={(label: string) => label}
         />
         <Line

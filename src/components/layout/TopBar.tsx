@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { Plus, Moon, Sun, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MarketClock } from './MarketClock';
 import { useAppStore } from '@/stores/appStore';
 import { useFilterStore } from '@/stores/filterStore';
 import { useAccounts } from '@/hooks/useRepositories';
@@ -96,6 +97,8 @@ export function TopBar() {
           <Plus className="h-4 w-4" />
           Add Trade
         </Button>
+
+        <MarketClock />
       </div>
     </header>
   );

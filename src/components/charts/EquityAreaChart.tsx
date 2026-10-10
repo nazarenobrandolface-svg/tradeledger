@@ -55,8 +55,11 @@ export function EquityAreaChart({ data, height = 300, currency = 'USD' }: Equity
             backgroundColor: 'hsl(var(--popover))',
             border: '1px solid hsl(var(--border))',
             borderRadius: '8px',
-            fontSize: '12px'
+            fontSize: '12px',
+            color: 'hsl(var(--popover-foreground))'
           }}
+          labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+          itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
           formatter={(value: number | string) => [formatCurrency(Number(value), currency), 'Equity']}
         />
         <Area
