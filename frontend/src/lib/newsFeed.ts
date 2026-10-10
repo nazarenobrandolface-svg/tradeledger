@@ -1,3 +1,5 @@
+import { fetchFeed } from './feedFetch';
+
 export interface NewsItem {
   id: string;
   title: string;
@@ -28,7 +30,11 @@ export function parseRssNews(xmlText: string): NewsItem[] {
 }
 
 export async function fetchForexNews(): Promise<NewsItem[]> {
-  const response = await fetch('/news-rss?q=forex+trading&hl=en-US&gl=US&ceid=US:en');
-  if (!response.ok) throw new Error(`News feed failed: ${response.status}`);
-  return parseRssNews(await response.text());
+  const response = await fetchFeed('/news-rss?q=forex+trading&hl=en-US&gl=US&ceid=US:en', 'News');
+  const xml = await response.text();
+  const doc = new DOMParser().parseFromString(xml, 'text/xml');
+  if (doc.querySelector('parsererror')) {
+    throw new Error('News feed returned invalid data.');
+  }
+  return parseRssNews(xml);
 }

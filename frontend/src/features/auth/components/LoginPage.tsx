@@ -7,8 +7,11 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AccountSetupFields } from '@/components/shared/AccountSetupFields';
 import { isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/stores/authStore';
+import { pendingAccountName, savePendingAccount } from '@/lib/pendingAccount';
+import { clampLeverage, type AccountType } from '@/types/trade';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -20,6 +23,9 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [accountType, setAccountType] = useState<AccountType>('demo');
+  const [accountSize, setAccountSize] = useState('50000');
+  const [leverage, setLeverage] = useState(100);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -49,6 +55,8 @@ export function LoginPage() {
     setNotice(null);
 
     const trimmedEmail = email.trim();
+    const size = parseFloat(accountSize);
+    const accountLeverage = clampLeverage(leverage);
 
     if (mode === 'signup') {
       if (password.length < 6) {
@@ -57,6 +65,10 @@ export function LoginPage() {
       }
       if (password !== confirm) {
         setError('Passwords do not match.');
+        return;
+      }
+      if (!Number.isFinite(size) || size <= 0) {
+        setError('Enter a valid account size.');
         return;
       }
     } else if (!password) {
@@ -74,11 +86,24 @@ export function LoginPage() {
         }
         navigate('/dashboard', { replace: true });
       } else {
-        const result = await signUp(trimmedEmail, password);
+        const result = await signUp(trimmedEmail, password, {
+          accountType,
+          accountSize: size,
+          leverage: accountLeverage
+        });
         if (result.error) {
           setError(result.error);
           return;
         }
+        // Keep the account details until the app can persist them — with
+        // email confirmation the database is only reachable at first sign-in.
+        savePendingAccount({
+          name: pendingAccountName(accountType),
+          type: accountType,
+          currency: 'USD',
+          startingBalance: size,
+          leverage: accountLeverage
+        });
         if (result.needsConfirmation) {
           setNotice('Almost there — check your inbox to confirm your email, then sign in.');
           setMode('signin');
@@ -95,7 +120,7 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <Card className="max-h-[92vh] w-full max-w-lg overflow-y-auto">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">TradeLedger</CardTitle>
           <CardDescription>
@@ -144,6 +169,26 @@ export function LoginPage() {
                   required
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
+                />
+              </div>
+            )}
+
+            {mode === 'signup' && (
+              <div className="space-y-4 rounded-lg border p-4">
+                <div>
+                  <p className="text-sm font-medium">Your trading account</p>
+                  <p className="text-xs text-muted-foreground">
+                    This becomes your default account. You can add more in Settings later.
+                  </p>
+                </div>
+                <AccountSetupFields
+                  idPrefix="signup"
+                  type={accountType}
+                  onTypeChange={setAccountType}
+                  size={accountSize}
+                  onSizeChange={setAccountSize}
+                  leverage={leverage}
+                  onLeverageChange={setLeverage}
                 />
               </div>
             )}

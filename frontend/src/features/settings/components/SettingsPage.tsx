@@ -19,8 +19,10 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, Download, Upload, Sun, Moon, Monitor } from 'lucide-react';
 import type { Note, NoteFolder, DayNote } from '@/types/note';
+import { ACCOUNT_TYPE_LABELS, clampLeverage, type AccountType } from '@/types/trade';
 import type { Account, Trade, Execution } from '@/types/trade';
 import type { Tag, TradeTag } from '@/types/tag';
+import { AccountSetupFields } from '@/components/shared/AccountSetupFields';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 type PendingAction =
@@ -37,7 +39,9 @@ export function SettingsPage() {
   const { theme, setTheme } = useAppStore();
 
   const [accountName, setAccountName] = useState('');
+  const [accountType, setAccountType] = useState<AccountType>('demo');
   const [accountBalance, setAccountBalance] = useState('50000');
+  const [accountLeverage, setAccountLeverage] = useState(100);
   const [accountCurrency, setAccountCurrency] = useState('USD');
   const [commissionPerTrade, setCommissionPerTrade] = useState('0');
   const [commissionPerShare, setCommissionPerShare] = useState('0.005');
@@ -61,6 +65,8 @@ export function SettingsPage() {
       name: accountName.trim(),
       currency: accountCurrency,
       startingBalance: parseFloat(accountBalance) || 0,
+      type: accountType,
+      leverage: clampLeverage(accountLeverage),
       timezone: 'America/New_York',
       commissionPerTrade: parseFloat(commissionPerTrade) || 0,
       commissionPerShare: parseFloat(commissionPerShare) || 0,
@@ -314,7 +320,8 @@ export function SettingsPage() {
                   <div>
                     <div className="font-semibold">{account.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {account.currency} · Starting: ${account.startingBalance.toLocaleString()}
+                      {account.currency} · Starting: ${account.startingBalance.toLocaleString()} ·{' '}
+                      {ACCOUNT_TYPE_LABELS[account.type ?? 'demo']} · 1:{account.leverage ?? 100}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -356,12 +363,15 @@ export function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Starting Balance</Label>
-                  <Input
-                    type="number"
-                    value={accountBalance}
-                    onChange={(e) => setAccountBalance(e.target.value)}
+                <div className="col-span-2 space-y-4">
+                  <AccountSetupFields
+                    idPrefix="settings-account"
+                    type={accountType}
+                    onTypeChange={setAccountType}
+                    size={accountBalance}
+                    onSizeChange={setAccountBalance}
+                    leverage={accountLeverage}
+                    onLeverageChange={setAccountLeverage}
                   />
                 </div>
                 <div className="space-y-2">

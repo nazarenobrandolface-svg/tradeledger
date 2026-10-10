@@ -1,8 +1,28 @@
+export const ACCOUNT_TYPES = ['live', 'propfirm', 'demo'] as const;
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
+
+export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  live: 'Live',
+  propfirm: 'Prop Firm',
+  demo: 'Demo'
+};
+
+export const MIN_LEVERAGE = 30;
+export const MAX_LEVERAGE = 200;
+
+export function clampLeverage(value: number): number {
+  return Math.min(MAX_LEVERAGE, Math.max(MIN_LEVERAGE, Math.round(value)));
+}
+
 export interface Account {
   id: string;
   name: string;
   currency: string;
   startingBalance: number;
+  /** Optional: records created before this field existed have none. */
+  type?: AccountType;
+  /** Broker leverage as a plain number (100 = 1:100). */
+  leverage?: number;
   timezone: string;
   commissionPerTrade: number;
   commissionPerShare: number;

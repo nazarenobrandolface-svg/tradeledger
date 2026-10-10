@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import { feedProxyPlugin } from './feedProxy';
 
 export default defineConfig({
   // All frontend assets live under frontend/ — npm scripts run from the repo
@@ -10,25 +11,17 @@ export default defineConfig({
   root: __dirname,
   server: {
     port: 3000,
-    strictPort: true,
-    proxy: {
-      '/ff-calendar': {
-        target: 'https://nfs.faireconomy.media',
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/ff-calendar/, '')
-      },
-      '/news-rss': {
-        target: 'https://news.google.com',
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/news-rss/, '/rss/search')
-      }
-    }
+    strictPort: true
   },
   preview: {
     port: 3000,
     strictPort: true
   },
   plugins: [
+    // Feeds (Forex Factory calendar, Google News RSS) go through a caching
+    // middleware — the upstreams rate-limit with 429, which a plain proxy
+    // would pass straight to the UI. See frontend/feedProxy.ts.
+    feedProxyPlugin(),
     react(),
     VitePWA({
       registerType: 'prompt',

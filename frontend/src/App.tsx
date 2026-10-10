@@ -4,13 +4,11 @@ import { Loader2 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { UpdateToast } from '@/components/pwa/UpdateToast';
-import { initTheme, useAppStore } from '@/stores/appStore';
+import { initTheme } from '@/stores/appStore';
 import { initAuth, useAuthStore } from '@/stores/authStore';
 import { isSupabaseConfigured } from '@/lib/supabaseClient';
+import { bootstrapApp } from '@/lib/bootstrap';
 import { LoginPage } from '@/features/auth/components/LoginPage';
-import { db } from '@/db/database';
-import { seed } from '@/db/seed';
-import { repositories } from '@/repositories';
 import {
   DashboardPage,
   JournalPage,
@@ -55,27 +53,24 @@ export default function App() {
   useEffect(() => {
     initTheme();
     initAuth();
-    const checkSeed = async () => {
-      const settings = await db.settings.get('app');
-      // IndexedDB is the source of truth for the theme; localStorage only
-      // provides the instant first-paint value in initTheme().
-      if (settings?.theme && settings.theme !== useAppStore.getState().theme) {
-        useAppStore.getState().setTheme(settings.theme);
-      }
-      if (settings?.seeded) return;
-      // Only seed a truly empty database. Never clear existing user data.
-      const [accountCount, tradeCount, noteCount] = await Promise.all([
-        db.accounts.count(),
-        db.trades.count(),
-        db.notes.count()
-      ]);
-      if (accountCount > 0 || tradeCount > 0 || noteCount > 0) {
-        await repositories.settings.update({ seeded: true });
-        return;
-      }
-      await seed();
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      void bootstrapApp();
     };
-    checkSeed();
+    if (!isSupabaseConfigured) {
+      start();
+      return;
+    }
+    // Wait for auth resolution — and for a session, so demo data is never
+    // seeded for someone who is still looking at the login page.
+    const unsubscribe = useAuthStore.subscribe((state) => {
+      if (state.initialized && state.session) start();
+    });
+    const state = useAuthStore.getState();
+    if (state.initialized && state.session) start();
+    return unsubscribe;
   }, []);
 
   const shell = <AppShell />;
