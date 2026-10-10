@@ -4,7 +4,7 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:react-hooks/recommended"
   ],
-  "ignorePatterns": ["dist", ".eslintrc.cjs", ".eslintrc.json", "node_modules"],
+  "ignorePatterns": ["**/dist", ".eslintrc.cjs", ".eslintrc.json", "node_modules"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["react-refresh"],
   "rules": {

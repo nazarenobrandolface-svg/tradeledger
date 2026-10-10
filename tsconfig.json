@@ -17,9 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./frontend/src/*"]
     }
   },
-  "include": ["src", "tests"],
+  "include": ["frontend/src", "frontend/tests"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -5,6 +5,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
 export default defineConfig({
+  // All frontend assets live under frontend/ — npm scripts run from the repo
+  // root, so the Vite project root must be pinned explicitly.
+  root: __dirname,
   server: {
     port: 3000,
     strictPort: true

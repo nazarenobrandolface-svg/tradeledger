@@ -2,7 +2,9 @@ import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: 'class',
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  // Tailwind resolves these globs from the process cwd (the repo root, since
+  // npm scripts run there), so they are prefixed with frontend/.
+  content: ['./frontend/index.html', './frontend/src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {

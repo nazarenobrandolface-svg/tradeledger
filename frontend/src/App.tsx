@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, type ReactNode } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { UpdateToast } from '@/components/pwa/UpdateToast';
 import { initTheme, useAppStore } from '@/stores/appStore';
+import { initAuth, useAuthStore } from '@/stores/authStore';
+import { isSupabaseConfigured } from '@/lib/supabaseClient';
+import { LoginPage } from '@/features/auth/components/LoginPage';
 import { db } from '@/db/database';
 import { seed } from '@/db/seed';
 import { repositories } from '@/repositories';
@@ -31,9 +35,33 @@ function NotFoundPage() {
   );
 }
 
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { session, initialized } = useAuthStore();
+  const location = useLocation();
+
+  if (!initialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!session) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname + location.search }}
+      />
+    );
+  }
+  return <>{children}</>;
+}
+
 export default function App() {
   useEffect(() => {
     initTheme();
+    initAuth();
     const checkSeed = async () => {
       const settings = await db.settings.get('app');
       // IndexedDB is the source of truth for the theme; localStorage only
@@ -57,10 +85,17 @@ export default function App() {
     checkSeed();
   }, []);
 
+  const shell = <AppShell />;
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<AppShell />}>
+        <Route
+          path="/login"
+          element={
+            isSupabaseConfigured ? <LoginPage /> : <Navigate to="/dashboard" replace />
+          }
+        />
+        <Route element={isSupabaseConfigured ? <RequireAuth>{shell}</RequireAuth> : shell}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/journal" element={<JournalPage />} />

@@ -1,10 +1,12 @@
 import { useLocation } from 'react-router-dom';
-import { Plus, Moon, Sun, Monitor } from 'lucide-react';
+import { Plus, Moon, Sun, Monitor, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MarketClock } from './MarketClock';
 import { useAppStore } from '@/stores/appStore';
 import { useFilterStore } from '@/stores/filterStore';
 import { useAccounts } from '@/hooks/useRepositories';
+import { isSupabaseConfigured } from '@/lib/supabaseClient';
+import { useAuthStore } from '@/stores/authStore';
 import {
   Select,
   SelectContent,
@@ -33,6 +35,8 @@ export function TopBar() {
   const { theme, setTheme } = useAppStore();
   const { dateFrom, dateTo, setDateRange, accountId, setAccountId } = useFilterStore();
   const accounts = useAccounts();
+  const session = useAuthStore((s) => s.session);
+  const signOut = useAuthStore((s) => s.signOut);
 
   const title =
     pageTitles[location.pathname] ??
@@ -92,6 +96,17 @@ export function TopBar() {
         <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
           <ThemeIcon className="h-5 w-5" />
         </Button>
+
+        {isSupabaseConfigured && session && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => void signOut()}
+            aria-label="Sign out"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+        )}
 
         <Button size="sm" className="hidden h-9 gap-2 md:inline-flex" onClick={() => navigate('/trades/new')}>
           <Plus className="h-4 w-4" />
