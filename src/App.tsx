@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
@@ -7,63 +7,17 @@ import { initTheme, useAppStore } from '@/stores/appStore';
 import { db } from '@/db/database';
 import { seed } from '@/db/seed';
 import { repositories } from '@/repositories';
-import { Skeleton } from '@/components/ui/skeleton';
-
-const DashboardPage = lazy(() =>
-  import('@/features/dashboard/components/DashboardPage').then((m) => ({
-    default: m.DashboardPage
-  }))
-);
-const JournalPage = lazy(() =>
-  import('@/features/journal/components/JournalPage').then((m) => ({
-    default: m.JournalPage
-  }))
-);
-const TradesPage = lazy(() =>
-  import('@/features/trades/components/TradesPage').then((m) => ({
-    default: m.TradesPage
-  }))
-);
-const TradeDetailPage = lazy(() =>
-  import('@/features/trades/components/TradeDetailPage').then((m) => ({
-    default: m.TradeDetailPage
-  }))
-);
-const TradeFormPage = lazy(() =>
-  import('@/features/trades/components/TradeFormPage').then((m) => ({
-    default: m.TradeFormPage
-  }))
-);
-const ImportPage = lazy(() =>
-  import('@/features/import/components/ImportPage').then((m) => ({
-    default: m.ImportPage
-  }))
-);
-const ReportsPage = lazy(() =>
-  import('@/features/reports/components/ReportsPage').then((m) => ({
-    default: m.ReportsPage
-  }))
-);
-const NotebookPage = lazy(() =>
-  import('@/features/notebook/components/NotebookPage').then((m) => ({
-    default: m.NotebookPage
-  }))
-);
-const SettingsPage = lazy(() =>
-  import('@/features/settings/components/SettingsPage').then((m) => ({
-    default: m.SettingsPage
-  }))
-);
-
-function PageLoader() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-64" />
-      <Skeleton className="h-48" />
-    </div>
-  );
-}
+import {
+  DashboardPage,
+  JournalPage,
+  TradesPage,
+  TradeDetailPage,
+  TradeFormPage,
+  ImportPage,
+  ReportsPage,
+  NotebookPage,
+  SettingsPage
+} from '@/routes';
 
 function NotFoundPage() {
   return (
@@ -105,25 +59,23 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/journal" element={<JournalPage />} />
-            <Route path="/journal/:date" element={<JournalPage />} />
-            <Route path="/trades" element={<TradesPage />} />
-            <Route path="/trades/new" element={<TradeFormPage />} />
-            <Route path="/trades/:id" element={<TradeDetailPage />} />
-            <Route path="/import" element={<ImportPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/reports/:tab" element={<ReportsPage />} />
-            <Route path="/notebook" element={<NotebookPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </Suspense>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/journal" element={<JournalPage />} />
+          <Route path="/journal/:date" element={<JournalPage />} />
+          <Route path="/trades" element={<TradesPage />} />
+          <Route path="/trades/new" element={<TradeFormPage />} />
+          <Route path="/trades/:id" element={<TradeDetailPage />} />
+          <Route path="/import" element={<ImportPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/reports/:tab" element={<ReportsPage />} />
+          <Route path="/notebook" element={<NotebookPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
       <InstallPrompt />
       <UpdateToast />
     </BrowserRouter>
