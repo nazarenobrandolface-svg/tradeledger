@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/ff-calendar/:path*", "destination": "/api/ff-calendar" },
+    { "source": "/news-rss", "destination": "/api/news-rss" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

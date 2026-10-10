@@ -77,34 +77,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Split heavyweight node_modules code into stable, cacheable vendor
-        // chunks so the entry chunk stays small and unchanged deps are not
-        // re-downloaded after every app release. Rule: never mix an eager
-        // (entry-graph) dependency with a lazy-only dependency in one chunk,
-        // or the lazy code gets pulled into first load.
-        manualChunks(id: string) {
-          if (!id.includes('node_modules')) return undefined;
-          const p = id.replace(/\\/g, '/');
-          // Keep lucide per-icon so only icons used on loaded pages ship.
-          if (p.includes('/lucide-react/')) return undefined;
-          // Lazy: notebook editor only.
-          if (/@tiptap|\/prosemirror/.test(p)) return 'vendor-editor';
-          // Eager but tiny (sanitizing is used by the data layer).
-          if (p.includes('/dompurify/')) return 'vendor-sanitize';
-          // Lazy: charts only.
-          if (/\/(recharts|d3-[a-z-]+|internmap|delaunator|robust-predicates)\//.test(p)) {
-            return 'vendor-charts';
-          }
-          // Lazy: CSV import only.
-          if (p.includes('/papaparse/')) return 'vendor-import';
-          // Eager core.
-          if (/\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(p)) {
-            return 'vendor-react';
-          }
-          if (p.includes('/@radix-ui/')) return 'vendor-ui';
-          if (p.includes('/dexie/')) return 'vendor-db';
-          return 'vendor';
-        }
+        // No manualChunks: function-based splitting kept recharts and tiptap
+        // (with a duplicated React copy!) in vendor chunks that cycled back
+        // into the entry chunk, throwing "Cannot access ... before
+        // initialization" at startup — a blank page in production builds.
+        // Rollup's default chunking keeps lazy libs (charts, editor, papaparse)
+        // out of the entry graph without creating cross-chunk cycles.
       }
     }
   },
