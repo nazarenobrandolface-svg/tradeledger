@@ -7,6 +7,8 @@ export const pageLoaders = {
   importTrades: () => import('@/features/import/components/ImportPage'),
   reports: () => import('@/features/reports/components/ReportsPage'),
   notebook: () => import('@/features/notebook/components/NotebookPage'),
+  sessions: () => import('@/features/sessions/components/SessionsPage'),
+  news: () => import('@/features/news/components/NewsPage'),
   settings: () => import('@/features/settings/components/SettingsPage')
 };
 

@@ -5,6 +5,8 @@ import {
   ArrowLeftRight,
   BarChart3,
   Library,
+  Globe,
+  Newspaper,
   Settings,
   PanelLeftClose,
   PanelLeft,
@@ -20,6 +22,8 @@ const navItems = [
   { to: '/trades', label: 'Trades', icon: ArrowLeftRight },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
   { to: '/notebook', label: 'Notebook', icon: Library },
+  { to: '/sessions', label: 'Sessions', icon: Globe },
+  { to: '/news', label: 'News', icon: Newspaper },
   { to: '/import', label: 'Import', icon: Upload },
   { to: '/settings', label: 'Settings', icon: Settings }
 ];

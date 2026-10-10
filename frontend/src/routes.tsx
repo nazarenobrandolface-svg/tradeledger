@@ -25,6 +25,12 @@ export const ReportsPage = lazy(() =>
 export const NotebookPage = lazy(() =>
   pageLoaders.notebook().then((m) => ({ default: m.NotebookPage }))
 );
+export const SessionsPage = lazy(() =>
+  pageLoaders.sessions().then((m) => ({ default: m.SessionsPage }))
+);
+export const NewsPage = lazy(() =>
+  pageLoaders.news().then((m) => ({ default: m.NewsPage }))
+);
 export const SettingsPage = lazy(() =>
   pageLoaders.settings().then((m) => ({ default: m.SettingsPage }))
 );

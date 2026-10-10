@@ -10,7 +10,19 @@ export default defineConfig({
   root: __dirname,
   server: {
     port: 3000,
-    strictPort: true
+    strictPort: true,
+    proxy: {
+      '/ff-calendar': {
+        target: 'https://nfs.faireconomy.media',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/ff-calendar/, '')
+      },
+      '/news-rss': {
+        target: 'https://news.google.com',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/news-rss/, '/rss/search')
+      }
+    }
   },
   preview: {
     port: 3000,

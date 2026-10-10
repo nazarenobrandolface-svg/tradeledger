@@ -20,6 +20,8 @@ import {
   ImportPage,
   ReportsPage,
   NotebookPage,
+  SessionsPage,
+  NewsPage,
   SettingsPage
 } from '@/routes';
 
@@ -98,6 +100,8 @@ export default function App() {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/reports/:tab" element={<ReportsPage />} />
           <Route path="/notebook" element={<NotebookPage />} />
+          <Route path="/sessions" element={<SessionsPage />} />
+          <Route path="/news" element={<NewsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
