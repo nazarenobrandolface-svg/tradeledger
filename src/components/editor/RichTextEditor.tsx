@@ -24,6 +24,8 @@ interface RichTextEditorProps {
   className?: string;
   /** Called after 500ms of inactivity — used for the "Saved" indicator. */
   onIdle?: () => void;
+  /** Called when image files are pasted (screenshots) instead of inserted. */
+  onImagePaste?: (files: File[]) => void;
 }
 
 function ToolbarButton({
@@ -145,10 +147,18 @@ export function RichTextEditor({
   onChange,
   placeholder = 'Start writing…',
   className,
-  onIdle
+  onIdle,
+  onImagePaste
 }: RichTextEditorProps) {
   const isExternalUpdate = useRef(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The editor is created once; keep the latest callback in a ref so a
+  // recreated editor is never required when the prop identity changes.
+  const onImagePasteRef = useRef(onImagePaste);
+  useEffect(() => {
+    onImagePasteRef.current = onImagePaste;
+  });
 
   const editor = useEditor({
     extensions: [
@@ -161,6 +171,14 @@ export function RichTextEditor({
       attributes: {
         class: 'ProseMirror focus:outline-none',
         'aria-label': 'Note body'
+      },
+      handlePaste: (_view, event) => {
+        const files = Array.from(event.clipboardData?.files ?? []).filter((f) =>
+          f.type.startsWith('image/')
+        );
+        if (files.length === 0) return false;
+        onImagePasteRef.current?.(files);
+        return true;
       }
     },
     onUpdate: ({ editor: e }) => {

@@ -4,6 +4,11 @@
 
 @layer base {
   :root {
+    /* Native widgets (select popups, date pickers, scrollbars, form controls)
+       must follow the theme — without this Chrome keeps light-mode colors
+       and renders white-on-white / black-on-dark text in dark mode. */
+    color-scheme: light;
+
     /* Light palette — matches the original design tokens
        (#F6F7FB page, #6C5CE7 brand purple, #16C784 / #EA3943 P&L) */
     --background: 224 38% 97%;
@@ -31,6 +36,8 @@
   }
 
   .dark {
+    color-scheme: dark;
+
     --background: 232 30% 10%;
     --foreground: 220 14% 96%;
     --card: 232 28% 13%;
@@ -102,6 +109,14 @@
 :focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
+}
+
+/* Native <select> option list — Chrome draws the popup from the UA palette
+   unless colors are set explicitly, leaving white text on a white dropdown
+   in dark mode. */
+select option {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
 }
 
 /* Tiptap / ProseMirror rich-text content */

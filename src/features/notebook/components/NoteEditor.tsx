@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { format } from 'date-fns';
 import {
   ArrowLeft,
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { RichTextEditor } from '@/components/editor/RichTextEditor';
+import { NoteAttachments } from './NoteAttachments';
+import { useNoteAttachments } from '@/hooks/useNoteAttachments';
 import type { Note, NoteFolder } from '@/types/note';
 
 interface NoteEditorProps {
@@ -33,8 +35,13 @@ export function NoteEditor({ note, folders, trades, save, onDelete, onBack }: No
   const [status, setStatus] = useState<SaveStatus>('idle');
   const [tagInput, setTagInput] = useState('');
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedNoteId = useRef(note.id);
+  const { attachments, uploading, error, uploadFiles, remove, clearError } =
+    useNoteAttachments(note.id);
+
+  const hasFiles = (e: DragEvent) => e.dataTransfer.types.includes('Files');
 
   // Reset local drafts when a different note is selected.
   useEffect(() => {
@@ -90,7 +97,28 @@ export function NoteEditor({ note, folders, trades, save, onDelete, onBack }: No
   const linkedTrades = trades.filter((t) => note.linkedTradeIds.includes(t.id));
 
   return (
-    <div className="flex h-full flex-col">
+    <div
+      className="relative flex h-full flex-col"
+      onDragOver={(e) => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
+      }}
+      onDrop={(e) => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        setDragging(false);
+        void uploadFiles(Array.from(e.dataTransfer.files));
+      }}
+    >
+      {dragging && (
+        <div className="pointer-events-none absolute inset-2 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/10 text-sm font-medium text-primary">
+          Drop to attach
+        </div>
+      )}
       <div className="flex items-center gap-2 border-b px-3 py-2">
         {onBack && (
           <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={onBack}>
@@ -140,6 +168,7 @@ export function NoteEditor({ note, folders, trades, save, onDelete, onBack }: No
           value={content}
           onChange={setContent}
           onIdle={() => void runSave({ content })}
+          onImagePaste={(files) => void uploadFiles(files)}
           placeholder="Start writing. Use the toolbar for formatting."
         />
 
@@ -184,7 +213,7 @@ export function NoteEditor({ note, folders, trades, save, onDelete, onBack }: No
               <select
                 value=""
                 onChange={(e) => addTradeLink(e.target.value)}
-                className="h-9 flex-1 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 flex-1 rounded-md border border-input bg-transparent px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                 aria-label="Select a trade to link"
               >
                 <option value="">Choose a trade…</option>
@@ -233,7 +262,7 @@ export function NoteEditor({ note, folders, trades, save, onDelete, onBack }: No
                     e.target.value = '';
                   }
                 }}
-                className="h-9 flex-1 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 flex-1 rounded-md border border-input bg-transparent px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                 aria-label="Select a date to link"
               />
             </div>
@@ -270,7 +299,7 @@ export function NoteEditor({ note, folders, trades, save, onDelete, onBack }: No
               id="note-folder"
               value={note.folderId ?? ''}
               onChange={(e) => void runSave({ folderId: e.target.value || null })}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">No folder</option>
               {folders.map((f) => (
@@ -281,6 +310,16 @@ export function NoteEditor({ note, folders, trades, save, onDelete, onBack }: No
             </select>
           </div>
         </div>
+
+        <NoteAttachments
+          attachments={attachments}
+          uploading={uploading}
+          error={error}
+          dragging={dragging}
+          onUpload={(files) => void uploadFiles(files)}
+          onDelete={remove}
+          onDismissError={clearError}
+        />
 
         <p className="mt-4 text-xs text-muted-foreground">
           Updated {format(note.updatedAt, 'MMM d, yyyy HH:mm')}

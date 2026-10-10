@@ -198,7 +198,7 @@ function FolderSelectInline({
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value || null)}
-      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
       aria-label="Filter by folder"
     >
       <option value="">All notes ({totalCount})</option>
