@@ -27,6 +27,10 @@ export const tagRepository: TagRepository = {
     await db.tags.delete(id);
   },
 
+  async getAllTradeTags() {
+    return db.tradeTags.toArray();
+  },
+
   async getTagsForTrade(tradeId) {
     const tradeTags = await db.tradeTags.where('tradeId').equals(tradeId).toArray();
     const tagIds = tradeTags.map((tt) => tt.tagId);

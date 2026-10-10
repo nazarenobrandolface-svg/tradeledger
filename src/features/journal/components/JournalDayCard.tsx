@@ -119,10 +119,11 @@ export function JournalDayCard({ day, currency = 'USD' }: JournalDayCardProps) {
                 const pnl = calcNetPnl(trade.executions, trade.side);
                 const outcome = calcTradeOutcome(trade.executions);
                 return (
-                  <div
+                  <button
                     key={trade.id}
+                    type="button"
                     onClick={() => navigate(`/trades/${trade.id}`)}
-                    className="flex cursor-pointer items-center justify-between rounded-lg border p-2.5 text-sm hover:bg-muted/50"
+                    className="flex w-full items-center justify-between rounded-lg border p-2.5 text-left text-sm hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{trade.symbol}</span>
@@ -137,7 +138,7 @@ export function JournalDayCard({ day, currency = 'USD' }: JournalDayCardProps) {
                       </span>
                     </div>
                     <PnLDisplay value={pnl} currency={currency} size="sm" />
-                  </div>
+                  </button>
                 );
               })}
             </div>

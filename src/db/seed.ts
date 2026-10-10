@@ -31,7 +31,6 @@ async function seed() {
   await db.executions.clear();
   await db.tags.clear();
   await db.tradeTags.clear();
-  await db.playbooks.clear();
   await db.dayNotes.clear();
   await db.notes.clear();
   await db.accounts.clear();
@@ -100,54 +99,6 @@ async function seed() {
     });
   }
 
-  const playbookIds: string[] = [];
-  const playbooks = [
-    {
-      name: 'Momentum Breakout',
-      description: 'Trade breakouts from consolidation patterns with volume confirmation',
-      color: '#6C5CE7',
-      rules: [
-        { id: 'r1', label: 'Stock is in an uptrend', type: 'entry' as const },
-        { id: 'r2', label: 'Clear resistance level identified', type: 'entry' as const },
-        { id: 'r3', label: 'Volume above average at breakout', type: 'entry' as const },
-        { id: 'r4', label: 'Stop placed below breakout level', type: 'risk' as const },
-        { id: 'r5', label: 'Target at 2:1 R minimum', type: 'exit' as const }
-      ]
-    },
-    {
-      name: 'VWAP Reclaim',
-      description: 'Enter when price reclaims VWAP after a morning selloff',
-      color: '#16C784',
-      rules: [
-        { id: 'r1', label: 'Price below VWAP initially', type: 'entry' as const },
-        { id: 'r2', label: 'Strong bounce from support', type: 'entry' as const },
-        { id: 'r3', label: 'Candle close above VWAP', type: 'entry' as const },
-        { id: 'r4', label: 'Risk max 1% of account', type: 'risk' as const }
-      ]
-    },
-    {
-      name: 'Mean Reversion',
-      description: 'Fade extended moves back to the mean',
-      color: '#EA3943',
-      rules: [
-        { id: 'r1', label: 'Price extended 2+ std devs', type: 'entry' as const },
-        { id: 'r2', label: 'RSI extreme (>70 or <30)', type: 'entry' as const },
-        { id: 'r3', label: 'Tight stop beyond extreme', type: 'risk' as const }
-      ]
-    }
-  ];
-
-  for (const pb of playbooks) {
-    const id = generateId();
-    playbookIds.push(id);
-    await db.playbooks.put({
-      id,
-      ...pb,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    });
-  }
-
   const today = new Date();
   const startDate = subDays(today, 180);
 
@@ -162,7 +113,6 @@ async function seed() {
         const symbol = pick(SYMBOLS);
         const side = Math.random() > 0.5 ? ('long' as const) : ('short' as const);
         const account = Math.random() > 0.3 ? accountId : secondAccountId;
-        const playbookId = Math.random() > 0.3 ? pick(playbookIds) : null;
 
         const entryPrice = randomBetween(50, 500);
         const qty = randomInt(10, 200);
@@ -206,16 +156,11 @@ async function seed() {
           plannedEntry: entryPrice,
           plannedStop: usePlannedStop ? plannedStop : null,
           plannedTarget: usePlannedStop ? plannedTarget : null,
-          playbookId,
           rating: randomInt(1, 5),
           notes:
             Math.random() > 0.5
               ? `<p>${isWin ? 'Good execution on this trade' : 'Tightened stop too early'} — followed the plan mostly.</p>`
               : '',
-          ruleChecklist:
-            playbookId && usePlannedStop
-              ? { r1: true, r2: Math.random() > 0.3, r3: Math.random() > 0.4 }
-              : {},
           createdAt: openTime.getTime(),
           updatedAt: closeTime.getTime()
         });
@@ -298,6 +243,13 @@ async function seed() {
   }
 
   const noteFolders = ['Strategy', 'Review', 'Ideas', 'Learning'];
+  const folderIds = new Map<string, string>();
+  for (const name of noteFolders) {
+    const folderId = generateId();
+    folderIds.set(name, folderId);
+    await db.noteFolders.put({ id: folderId, name, createdAt: Date.now() });
+  }
+
   const noteTitles = [
     'My Trading Rules',
     'Weekly Review Template',
@@ -312,7 +264,7 @@ async function seed() {
       id,
       title: noteTitles[i] as string,
       content: `<p>This is my note about ${(noteTitles[i] as string).toLowerCase()}. Edit me to add your own content.</p>`,
-      folder: pick(noteFolders),
+      folderId: folderIds.get(pick(noteFolders)) ?? null,
       tags: pickN(SETUPS, 2),
       linkedTradeIds: [],
       linkedDates: [],

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useFilterStore } from '@/stores/filterStore';
-import { useTradesWithExecutions, useDefaultAccount } from '@/hooks/useRepositories';
+import { useTradesWithExecutions, useDefaultAccount, useTags, useTradeTags } from '@/hooks/useRepositories';
 import {
   calcNetPnl,
   calcTradeOutcome,
@@ -31,6 +31,8 @@ export function ReportsPage() {
     accountId: accountId ?? undefined
   });
   const account = useDefaultAccount();
+  const tags = useTags();
+  const tradeTags = useTradeTags();
 
   const currency = account?.currency ?? 'USD';
 
@@ -144,22 +146,34 @@ export function ReportsPage() {
       .sort((a, b) => b.pnl - a.pnl);
   }, [metrics]);
 
-  const bySetup = useMemo(() => {
+  const byTag = useMemo(() => {
     if (!metrics) return [];
+    const tagNameById = new Map(tags.map((t) => [t.id, t.name]));
+    const tradeIdToTagNames = new Map<string, string[]>();
+    for (const tt of tradeTags) {
+      const name = tagNameById.get(tt.tagId);
+      if (!name) continue;
+      const list = tradeIdToTagNames.get(tt.tradeId) ?? [];
+      list.push(name);
+      tradeIdToTagNames.set(tt.tradeId, list);
+    }
     const map = new Map<string, { pnl: number; count: number; wins: number }>();
     for (const t of metrics.closed) {
-      const pbName = t.playbookId ?? 'No Playbook';
+      const names = tradeIdToTagNames.get(t.id) ?? [];
       const pnl = calcNetPnl(t.executions, t.side);
-      const existing = map.get(pbName) ?? { pnl: 0, count: 0, wins: 0 };
-      existing.pnl += pnl;
-      existing.count++;
-      if (calcTradeOutcome(t.executions) === 'win') existing.wins++;
-      map.set(pbName, existing);
+      const isWin = calcTradeOutcome(t.executions) === 'win';
+      for (const name of names) {
+        const existing = map.get(name) ?? { pnl: 0, count: 0, wins: 0 };
+        existing.pnl += pnl;
+        existing.count++;
+        if (isWin) existing.wins++;
+        map.set(name, existing);
+      }
     }
     return Array.from(map.entries())
-      .map(([setup, data]) => ({ setup, ...data, winRate: data.wins / data.count }))
+      .map(([tag, data]) => ({ tag, ...data, winRate: data.count > 0 ? data.wins / data.count : 0 }))
       .sort((a, b) => b.pnl - a.pnl);
-  }, [metrics]);
+  }, [metrics, tags, tradeTags]);
 
   if (!metrics) {
     return <div className="skeleton h-64" />;
@@ -180,7 +194,7 @@ export function ReportsPage() {
       <TabsList className="mb-4">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="symbol">By Symbol</TabsTrigger>
-        <TabsTrigger value="setup">By Setup</TabsTrigger>
+        <TabsTrigger value="setup">By Tag</TabsTrigger>
         <TabsTrigger value="risk">Risk</TabsTrigger>
       </TabsList>
 
@@ -246,31 +260,37 @@ export function ReportsPage() {
       <TabsContent value="setup">
         <Card>
           <CardHeader>
-            <CardTitle>Performance by Playbook</CardTitle>
+            <CardTitle>Performance by Tag</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Playbook</TableHead>
-                  <TableHead>Trades</TableHead>
-                  <TableHead>Win Rate</TableHead>
-                  <TableHead>Net P&L</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bySetup.map((row) => (
-                  <TableRow key={row.setup}>
-                    <TableCell className="font-semibold">{row.setup}</TableCell>
-                    <TableCell>{row.count}</TableCell>
-                    <TableCell>{formatPercent(row.winRate)}</TableCell>
-                    <TableCell>
-                      <PnLDisplay value={row.pnl} currency={currency} size="sm" />
-                    </TableCell>
+            {byTag.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No tagged trades in this range. Add tags to trades to see this breakdown.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tag</TableHead>
+                    <TableHead>Trades</TableHead>
+                    <TableHead>Win Rate</TableHead>
+                    <TableHead>Net P&L</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {byTag.map((row) => (
+                    <TableRow key={row.tag}>
+                      <TableCell className="font-semibold">{row.tag}</TableCell>
+                      <TableCell>{row.count}</TableCell>
+                      <TableCell>{formatPercent(row.winRate)}</TableCell>
+                      <TableCell>
+                        <PnLDisplay value={row.pnl} currency={currency} size="sm" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

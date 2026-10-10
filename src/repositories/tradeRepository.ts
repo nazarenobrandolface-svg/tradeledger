@@ -43,17 +43,27 @@ export const tradeRepository: TradeRepository = {
     if (filters?.status) {
       trades = trades.filter((t) => t.status === filters.status);
     }
-    if (filters?.playbookId) {
-      trades = trades.filter((t) => t.playbookId === filters.playbookId);
+
+    // One indexed query for all executions instead of one round-trip per
+    // trade (the old loop issued N IDB queries — very slow on large books).
+    const tradeIds = trades.map((t) => t.id);
+    const executions = tradeIds.length
+      ? await db.executions.where('tradeId').anyOf(tradeIds).toArray()
+      : [];
+    const byTrade = new Map<string, typeof executions>();
+    for (const execution of executions) {
+      const bucket = byTrade.get(execution.tradeId);
+      if (bucket) bucket.push(execution);
+      else byTrade.set(execution.tradeId, [execution]);
+    }
+    for (const bucket of byTrade.values()) {
+      bucket.sort((a, b) => a.executedAt - b.executedAt);
     }
 
-    const results: TradeWithExecutions[] = [];
-    for (const trade of trades) {
-      const executions = await db.executions.where('tradeId').equals(trade.id).toArray();
-      results.push({ ...trade, executions });
-    }
-
-    return results;
+    return trades.map((trade) => ({
+      ...trade,
+      executions: byTrade.get(trade.id) ?? []
+    }));
   },
 
   async getByAccount(accountId) {

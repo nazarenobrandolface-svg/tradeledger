@@ -1,7 +1,6 @@
 import type { Account, Trade, Execution, TradeWithExecutions, TradeFilters } from '@/types/trade';
-import type { Tag } from '@/types/tag';
-import type { Playbook } from '@/types/playbook';
-import type { DayNote, Note, Attachment } from '@/types/note';
+import type { Tag, TradeTag } from '@/types/tag';
+import type { DayNote, Note, NoteFolder, Attachment, FolderDeleteMode } from '@/types/note';
 import type { ImportTemplate, AppSettings } from '@/types/settings';
 
 export interface AccountRepository {
@@ -40,28 +39,33 @@ export interface TagRepository {
   create(tag: Omit<Tag, 'createdAt'>): Promise<string>;
   update(id: string, changes: Partial<Tag>): Promise<void>;
   delete(id: string): Promise<void>;
+  getAllTradeTags(): Promise<TradeTag[]>;
   getTagsForTrade(tradeId: string): Promise<Tag[]>;
   addTagToTrade(tradeId: string, tagId: string): Promise<void>;
   removeTagFromTrade(tradeId: string, tagId: string): Promise<void>;
-}
-
-export interface PlaybookRepository {
-  getAll(): Promise<Playbook[]>;
-  getById(id: string): Promise<Playbook | undefined>;
-  create(playbook: Omit<Playbook, 'createdAt' | 'updatedAt'>): Promise<string>;
-  update(id: string, changes: Partial<Playbook>): Promise<void>;
-  delete(id: string): Promise<void>;
 }
 
 export interface NoteRepository {
   getDayNotes(): Promise<DayNote[]>;
   getDayNote(accountId: string, date: string): Promise<DayNote | undefined>;
   upsertDayNote(note: Omit<DayNote, 'createdAt' | 'updatedAt'>): Promise<void>;
+  getFolders(): Promise<NoteFolder[]>;
+  createFolder(name: string): Promise<string>;
+  renameFolder(id: string, name: string): Promise<void>;
+  deleteFolder(id: string, mode?: FolderDeleteMode): Promise<void>;
   getNotes(): Promise<Note[]>;
   getNoteById(id: string): Promise<Note | undefined>;
+  searchNotes(params: { query?: string; folderId?: string | null }): Promise<Note[]>;
   createNote(note: Omit<Note, 'createdAt' | 'updatedAt'>): Promise<string>;
   updateNote(id: string, changes: Partial<Note>): Promise<void>;
   deleteNote(id: string): Promise<void>;
+  setNoteTags(id: string, tags: string[]): Promise<void>;
+  linkTrade(noteId: string, tradeId: string): Promise<void>;
+  unlinkTrade(noteId: string, tradeId: string): Promise<void>;
+  linkDate(noteId: string, date: string): Promise<void>;
+  unlinkDate(noteId: string, date: string): Promise<void>;
+  getNotesForTrade(tradeId: string): Promise<Note[]>;
+  getNotesForDate(date: string): Promise<Note[]>;
 }
 
 export interface AttachmentRepository {
@@ -89,7 +93,6 @@ export interface Repositories {
   trades: TradeRepository;
   executions: ExecutionRepository;
   tags: TagRepository;
-  playbooks: PlaybookRepository;
   notes: NoteRepository;
   attachments: AttachmentRepository;
   importTemplates: ImportTemplateRepository;

@@ -19,7 +19,6 @@ const navItems = [
   { to: '/journal', label: 'Journal', icon: BookOpen },
   { to: '/trades', label: 'Trades', icon: ArrowLeftRight },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
-  { to: '/playbooks', label: 'Playbooks', icon: CandlestickChart },
   { to: '/notebook', label: 'Notebook', icon: Library },
   { to: '/import', label: 'Import', icon: Upload },
   { to: '/settings', label: 'Settings', icon: Settings }

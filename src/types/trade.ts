@@ -26,10 +26,8 @@ export interface Trade {
   plannedEntry: number | null;
   plannedStop: number | null;
   plannedTarget: number | null;
-  playbookId: string | null;
   rating: number | null;
   notes: string;
-  ruleChecklist: Record<string, boolean>;
   createdAt: number;
   updatedAt: number;
 }
@@ -57,7 +55,6 @@ export interface TradeFilters {
   side?: TradeSide;
   status?: TradeStatus;
   outcome?: TradeOutcome;
-  playbookId?: string;
   tagIds?: string[];
   dateFrom?: number;
   dateTo?: number;

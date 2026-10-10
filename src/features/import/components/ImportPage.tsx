@@ -45,6 +45,7 @@ export function ImportPage() {
   const [accountId, setAccountId] = useState('');
   const [templateName, setTemplateName] = useState('');
   const [imported, setImported] = useState(0);
+  const [importError, setImportError] = useState('');
 
   const handleFile = useCallback(
     (f: File) => {
@@ -73,9 +74,10 @@ export function ImportPage() {
 
   const handleImport = async () => {
     if (!accountId) {
-      alert('Please select an account');
+      setImportError('Please select an account before importing.');
       return;
     }
+    setImportError('');
 
     let count = 0;
     for (const row of rows) {
@@ -107,10 +109,8 @@ export function ImportPage() {
         plannedEntry: null,
         plannedStop: null,
         plannedTarget: null,
-        playbookId: null,
         rating: null,
-        notes: '',
-        ruleChecklist: {}
+        notes: ''
       });
 
       await repositories.executions.create({
@@ -335,6 +335,11 @@ export function ImportPage() {
                 </TableBody>
               </Table>
             </div>
+            {importError && (
+              <p role="alert" className="text-sm text-loss">
+                {importError}
+              </p>
+            )}
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep('map')}>
                 <ArrowLeft className="h-4 w-4" />

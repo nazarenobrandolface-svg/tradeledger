@@ -21,7 +21,6 @@ const pageTitles: Record<string, string> = {
   '/journal': 'Daily Journal',
   '/trades': 'Trades',
   '/reports': 'Reports',
-  '/playbooks': 'Playbooks',
   '/notebook': 'Notebook',
   '/import': 'Import Trades',
   '/settings': 'Settings'
@@ -47,10 +46,10 @@ export function TopBar() {
   const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur md:px-6">
+    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center justify-between gap-2 border-b bg-background/95 px-4 py-2 backdrop-blur md:h-16 md:flex-nowrap md:px-6 md:py-0">
       <h1 className="text-lg font-semibold">{title}</h1>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
@@ -76,7 +75,7 @@ export function TopBar() {
           value={accountId ?? 'all'}
           onValueChange={(v) => setAccountId(v === 'all' ? null : v)}
         >
-          <SelectTrigger className="h-9 w-[160px] text-sm">
+          <SelectTrigger className="h-9 w-[130px] text-sm md:w-[160px]">
             <SelectValue placeholder="All Accounts" />
           </SelectTrigger>
           <SelectContent>

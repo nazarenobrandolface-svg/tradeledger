@@ -3,9 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { UpdateToast } from '@/components/pwa/UpdateToast';
-import { initTheme } from '@/stores/appStore';
+import { initTheme, useAppStore } from '@/stores/appStore';
 import { db } from '@/db/database';
 import { seed } from '@/db/seed';
+import { repositories } from '@/repositories';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const DashboardPage = lazy(() =>
@@ -41,16 +42,6 @@ const ImportPage = lazy(() =>
 const ReportsPage = lazy(() =>
   import('@/features/reports/components/ReportsPage').then((m) => ({
     default: m.ReportsPage
-  }))
-);
-const PlaybooksPage = lazy(() =>
-  import('@/features/playbooks/components/PlaybooksPage').then((m) => ({
-    default: m.PlaybooksPage
-  }))
-);
-const PlaybookDetailPage = lazy(() =>
-  import('@/features/playbooks/components/PlaybookDetailPage').then((m) => ({
-    default: m.PlaybookDetailPage
   }))
 );
 const NotebookPage = lazy(() =>
@@ -91,9 +82,23 @@ export default function App() {
     initTheme();
     const checkSeed = async () => {
       const settings = await db.settings.get('app');
-      if (!settings?.seeded) {
-        await seed();
+      // IndexedDB is the source of truth for the theme; localStorage only
+      // provides the instant first-paint value in initTheme().
+      if (settings?.theme && settings.theme !== useAppStore.getState().theme) {
+        useAppStore.getState().setTheme(settings.theme);
       }
+      if (settings?.seeded) return;
+      // Only seed a truly empty database. Never clear existing user data.
+      const [accountCount, tradeCount, noteCount] = await Promise.all([
+        db.accounts.count(),
+        db.trades.count(),
+        db.notes.count()
+      ]);
+      if (accountCount > 0 || tradeCount > 0 || noteCount > 0) {
+        await repositories.settings.update({ seeded: true });
+        return;
+      }
+      await seed();
     };
     checkSeed();
   }, []);
@@ -113,8 +118,6 @@ export default function App() {
             <Route path="/import" element={<ImportPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/reports/:tab" element={<ReportsPage />} />
-            <Route path="/playbooks" element={<PlaybooksPage />} />
-            <Route path="/playbooks/:id" element={<PlaybookDetailPage />} />
             <Route path="/notebook" element={<NotebookPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFoundPage />} />

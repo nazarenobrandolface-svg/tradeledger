@@ -23,10 +23,11 @@ export function OpenPositions({ trades }: OpenPositionsProps) {
         ) : (
           <div className="space-y-2">
             {trades.slice(0, 8).map((trade) => (
-              <div
+              <button
                 key={trade.id}
+                type="button"
                 onClick={() => navigate(`/trades/${trade.id}`)}
-                className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                className="flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted/50"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -51,7 +52,7 @@ export function OpenPositions({ trades }: OpenPositionsProps) {
                 <Badge variant="outline" className="text-xs">
                   Open
                 </Badge>
-              </div>
+              </button>
             ))}
           </div>
         )}

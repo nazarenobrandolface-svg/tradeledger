@@ -1,79 +1,105 @@
-import { useState, useMemo } from 'react';
-import { useNotes } from '@/hooks/useRepositories';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useNoteFolders, useNoteSearch, useTradeList } from '@/hooks/useRepositories';
 import { repositories } from '@/repositories';
 import { generateId } from '@/lib/utils';
-import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Plus, Trash2, Pin, Search, Library, Folder } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { cn } from '@/lib/utils';
+import { FolderSidebar } from './FolderSidebar';
+import { NoteList } from './NoteList';
+import { NoteEditor } from './NoteEditor';
+import { Library } from 'lucide-react';
 
 export function NotebookPage() {
-  const notes = useNotes();
-  const [search, setSearch] = useState('');
-  const [folderFilter, setFolderFilter] = useState('all');
-  const [selectedNote, setSelectedNote] = useState<string | null>(null);
+  const [queryInput, setQueryInput] = useState('');
+  const [query, setQuery] = useState('');
+  const [folderFilter, setFolderFilter] = useState<string | null>(null);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'list' | 'editor'>('list');
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const folders = useMemo(() => {
-    const set = new Set<string>();
-    notes.forEach((n) => {
-      if (n.folder) set.add(n.folder);
+  // Deep link (?note=<id>) from trade detail / day drawer: select that note
+  // and clear any filter that might hide it.
+  const deepLinkedNote = searchParams.get('note');
+  useEffect(() => {
+    if (!deepLinkedNote) return;
+    setSelectedNoteId(deepLinkedNote);
+    setQueryInput('');
+    setQuery('');
+    setFolderFilter(null);
+    setMobileView('editor');
+    setSearchParams({}, { replace: true });
+  }, [deepLinkedNote, setSearchParams]);
+
+  const folders = useNoteFolders() ?? [];
+  const notes = useNoteSearch(query, folderFilter);
+  const trades = useTradeList();
+  const loading = notes === undefined;
+
+  // Debounce the search so we don't hit IndexedDB on every keystroke.
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setQuery(queryInput), 250);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [queryInput]);
+
+  const visibleNotes = useMemo(() => notes ?? [], [notes]);
+
+  // The editor reads the note directly so a filter that hides the selected
+  // note never blanks the editor.
+  const activeNote = useLiveQuery(
+    () => (selectedNoteId ? repositories.notes.getNoteById(selectedNoteId) : undefined),
+    [selectedNoteId]
+  );
+
+  const counts = useMemo(() => {
+    const map = new Map<string, number>();
+    visibleNotes.forEach((n) => {
+      if (n.folderId) map.set(n.folderId, (map.get(n.folderId) ?? 0) + 1);
     });
-    return Array.from(set).sort();
-  }, [notes]);
-
-  const filtered = useMemo(() => {
-    let list = [...notes];
-    if (search) {
-      const s = search.toLowerCase();
-      list = list.filter(
-        (n) => n.title.toLowerCase().includes(s) || n.content.toLowerCase().includes(s)
-      );
-    }
-    if (folderFilter !== 'all') {
-      list = list.filter((n) => n.folder === folderFilter);
-    }
-    return list;
-  }, [notes, search, folderFilter]);
-
-  const activeNote = notes.find((n) => n.id === selectedNote);
+    return map;
+  }, [visibleNotes]);
 
   const handleCreate = async () => {
     const id = await repositories.notes.createNote({
       id: generateId(),
-      title: 'Untitled Note',
+      title: '',
       content: '',
-      folder: folderFilter !== 'all' ? folderFilter : null,
+      folderId: folderFilter,
       tags: [],
       linkedTradeIds: [],
       linkedDates: [],
       pinned: false
     });
-    setSelectedNote(id);
+    setSelectedNoteId(id);
+    setMobileView('editor');
   };
 
-  const handleUpdate = async (id: string, changes: Partial<{ title: string; content: string; folder: string | null; pinned: boolean }>) => {
-    await repositories.notes.updateNote(id, changes);
+  const handleSave = async (changes: Parameters<typeof repositories.notes.updateNote>[1]) => {
+    if (!selectedNoteId) return;
+    await repositories.notes.updateNote(selectedNoteId, changes);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Delete this note?')) {
-      await repositories.notes.deleteNote(id);
-      if (selectedNote === id) setSelectedNote(null);
-    }
+  const handleDelete = async () => {
+    if (!selectedNoteId) return;
+    await repositories.notes.deleteNote(selectedNoteId);
+    setSelectedNoteId(null);
+    setMobileView('list');
   };
 
-  if (notes.length === 0) {
+  const handleSelect = (id: string) => {
+    setSelectedNoteId(id);
+    setMobileView('editor');
+  };
+
+  const empty =
+    !loading && visibleNotes.length === 0 && folders.length === 0 && query === '';
+
+  if (empty) {
     return (
       <EmptyState
         icon={<Library className="h-12 w-12" />}
@@ -85,132 +111,65 @@ export function NotebookPage() {
   }
 
   return (
-    <div className="grid h-[calc(100vh-140px)] grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
-      <Card className="flex flex-col overflow-hidden">
-        <div className="space-y-3 border-b p-4">
-          <Button onClick={handleCreate} className="w-full" size="sm">
-            <Plus className="h-4 w-4" />
-            New Note
-          </Button>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search notes..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8"
+    <div className="grid h-[calc(100vh-140px)] grid-cols-1 gap-4 lg:grid-cols-[200px_300px_1fr]">
+      {/* Folders — desktop only; on mobile they live behind the note list */}
+      <Card className="hidden overflow-hidden lg:block">
+        <FolderSidebar
+          folders={folders}
+          counts={counts}
+          totalCount={visibleNotes.length}
+          selectedFolderId={folderFilter}
+          onSelect={setFolderFilter}
+          onCreate={async (name) => {
+            await repositories.notes.createFolder(name);
+          }}
+          onRename={(id, name) => repositories.notes.renameFolder(id, name)}
+          onDelete={(id, mode) => repositories.notes.deleteFolder(id, mode)}
+        />
+      </Card>
+
+      {/* Note list */}
+      <Card
+        className={`overflow-hidden ${mobileView === 'editor' && activeNote ? 'hidden lg:flex' : 'flex'}`}
+      >
+        <div className="flex h-full w-full flex-col">
+          <div className="border-b px-3 py-2 lg:hidden">
+            <FolderSelectInline
+              folders={folders}
+              value={folderFilter}
+              onChange={setFolderFilter}
+              counts={counts}
+              totalCount={visibleNotes.length}
             />
           </div>
-          <Select value={folderFilter} onValueChange={setFolderFilter}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Folders</SelectItem>
-              {folders.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {f}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {filtered.map((note) => (
-            <button
-              key={note.id}
-              onClick={() => setSelectedNote(note.id)}
-              className={cn(
-                'w-full border-b p-3 text-left transition-colors hover:bg-muted/50',
-                selectedNote === note.id && 'bg-primary/5'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                {note.pinned && <Pin className="h-3 w-3 text-primary" />}
-                <span className="truncate text-sm font-medium">{note.title}</span>
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {note.folder && (
-                  <span className="inline-flex items-center gap-1">
-                    <Folder className="h-3 w-3" />
-                    {note.folder} ·
-                  </span>
-                )}{' '}
-                {format(note.updatedAt, 'MMM d, yyyy')}
-              </div>
-            </button>
-          ))}
+          <div className="min-h-0 flex-1">
+            <NoteList
+              notes={visibleNotes}
+              query={queryInput}
+              onQueryChange={setQueryInput}
+              selectedNoteId={selectedNoteId}
+              onSelect={handleSelect}
+              onCreate={handleCreate}
+              loading={loading}
+            />
+          </div>
         </div>
       </Card>
 
-      <Card className="overflow-hidden">
+      {/* Editor */}
+      <Card className={`overflow-hidden ${activeNote ? 'flex' : 'hidden lg:flex'}`}>
         {activeNote ? (
-          <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b p-4">
-              <Input
-                value={activeNote.title}
-                onChange={(e) => handleUpdate(activeNote.id, { title: e.target.value })}
-                className="max-w-md border-transparent bg-transparent text-lg font-semibold hover:border-input focus-visible:border-input"
-              />
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleUpdate(activeNote.id, { pinned: !activeNote.pinned })}
-                >
-                  <Pin className={cn('h-4 w-4', activeNote.pinned && 'fill-primary text-primary')} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(activeNote.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-loss" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 border-b p-3">
-              <Select
-                value={activeNote.folder ?? 'none'}
-                onValueChange={(v) =>
-                  handleUpdate(activeNote.id, { folder: v === 'none' ? null : v })
-                }
-              >
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No Folder</SelectItem>
-                  {folders.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Create new folder..."
-                className="w-[180px]"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const v = (e.target as HTMLInputElement).value.trim();
-                    if (v) {
-                      handleUpdate(activeNote.id, { folder: v });
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }
-                }}
-              />
-            </div>
-            <Textarea
-              value={activeNote.content}
-              onChange={(e) => handleUpdate(activeNote.id, { content: e.target.value })}
-              placeholder="Start writing..."
-              className="flex-1 resize-none border-0 shadow-none focus-visible:ring-0"
-            />
-          </div>
+          <NoteEditor
+            key={activeNote.id}
+            note={activeNote}
+            folders={folders}
+            trades={trades.map((t) => ({ id: t.id, symbol: t.symbol }))}
+            save={handleSave}
+            onDelete={handleDelete}
+            onBack={() => setMobileView('list')}
+          />
         ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
+          <div className="flex h-full flex-1 items-center justify-center text-muted-foreground">
             <div className="text-center">
               <Library className="mx-auto mb-2 h-8 w-8 opacity-30" />
               <p className="text-sm">Select a note or create a new one</p>
@@ -219,5 +178,35 @@ export function NotebookPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+function FolderSelectInline({
+  folders,
+  value,
+  onChange,
+  counts,
+  totalCount
+}: {
+  folders: Array<{ id: string; name: string }>;
+  value: string | null;
+  onChange: (id: string | null) => void;
+  counts: Map<string, number>;
+  totalCount: number;
+}) {
+  return (
+    <select
+      value={value ?? ''}
+      onChange={(e) => onChange(e.target.value || null)}
+      className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+      aria-label="Filter by folder"
+    >
+      <option value="">All notes ({totalCount})</option>
+      {folders.map((f) => (
+        <option key={f.id} value={f.id}>
+          {f.name} ({counts.get(f.id) ?? 0})
+        </option>
+      ))}
+    </select>
   );
 }

@@ -29,10 +29,11 @@ export function RecentTrades({ trades, currency = 'USD' }: RecentTradesProps) {
             {recent.map((trade) => {
               const pnl = calcNetPnl(trade.executions, trade.side);
               return (
-                <div
+                <button
                   key={trade.id}
+                  type="button"
                   onClick={() => navigate(`/trades/${trade.id}`)}
-                  className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                  className="flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-xs font-bold">
@@ -51,7 +52,7 @@ export function RecentTrades({ trades, currency = 'USD' }: RecentTradesProps) {
                       {trade.closedAt ? format(trade.closedAt, 'MMM d, HH:mm') : 'Open'}
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

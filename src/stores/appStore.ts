@@ -10,11 +10,24 @@ interface AppState {
   setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
+const THEME_KEY = 'theme';
+
+function syncThemeColorMeta() {
+  const dark = document.documentElement.classList.contains('dark');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? '#0D0F1A' : '#F6F7FB');
+}
+
 export const useAppStore = create<AppState>((set) => ({
   theme: 'system',
   sidebarCollapsed: false,
   setTheme: (theme) => {
     set({ theme });
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      // Storage can be unavailable (private mode); applying the theme still works.
+    }
     applyTheme(theme);
   },
   toggleSidebar: () =>
@@ -37,12 +50,31 @@ export function applyTheme(theme: Theme) {
   } else {
     root.classList.toggle('dark', theme === 'dark');
   }
+  syncThemeColorMeta();
 }
 
+let systemListenerAttached = false;
+
 export function initTheme() {
-  const stored = localStorage.getItem('theme') as Theme | null;
+  let stored: Theme | null = null;
+  try {
+    stored = localStorage.getItem(THEME_KEY) as Theme | null;
+  } catch {
+    stored = null;
+  }
   const theme = stored || 'system';
   useAppStore.getState().setTheme(theme);
+
+  // Follow OS changes while the 'system' theme is selected.
+  if (!systemListenerAttached) {
+    systemListenerAttached = true;
+    window
+      .matchMedia('(prefers-color-scheme: dark)')
+      .addEventListener('change', () => {
+        if (useAppStore.getState().theme === 'system') applyTheme('system');
+      });
+  }
+
   const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
   useAppStore.getState().setSidebarCollapsed(collapsed);
 }

@@ -18,7 +18,18 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Plus, Trash2, Download, Upload, Sun, Moon, Monitor } from 'lucide-react';
-import { seed } from '@/db/seed';
+import type { Note, NoteFolder, DayNote } from '@/types/note';
+import type { Account, Trade, Execution } from '@/types/trade';
+import type { Tag, TradeTag } from '@/types/tag';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+
+type PendingAction =
+  | { kind: 'account'; id: string }
+  | { kind: 'tag'; id: string }
+  | { kind: 'import'; data: Record<string, unknown> }
+  | { kind: 'clear' }
+  | { kind: 'reseed' }
+  | null;
 
 export function SettingsPage() {
   const accounts = useAccounts();
@@ -36,11 +47,19 @@ export function SettingsPage() {
   const [tagCategory, setTagCategory] = useState('custom');
   const [tagColor, setTagColor] = useState('#6C5CE7');
 
+  const [pending, setPending] = useState<PendingAction>(null);
+  const [status, setStatus] = useState<string | null>(null);
+
   useEffect(() => {
     if (settings) {
       useAppStore.getState().setTheme(settings.theme);
     }
   }, [settings]);
+
+  const handleSetTheme = (next: 'light' | 'dark' | 'system') => {
+    setTheme(next);
+    void repositories.settings.update({ theme: next });
+  };
 
   const handleAddAccount = async () => {
     if (!accountName.trim()) return;
@@ -57,10 +76,8 @@ export function SettingsPage() {
     setAccountName('');
   };
 
-  const handleDeleteAccount = async (id: string) => {
-    if (confirm('Delete this account? All trades will be removed.')) {
-      await repositories.accounts.delete(id);
-    }
+  const handleDeleteAccount = (id: string) => {
+    setPending({ kind: 'account', id });
   };
 
   const handleAddTag = async () => {
@@ -74,10 +91,8 @@ export function SettingsPage() {
     setTagName('');
   };
 
-  const handleDeleteTag = async (id: string) => {
-    if (confirm('Delete this tag?')) {
-      await repositories.tags.delete(id);
-    }
+  const handleDeleteTag = (id: string) => {
+    setPending({ kind: 'tag', id });
   };
 
   const handleExport = async () => {
@@ -87,8 +102,8 @@ export function SettingsPage() {
       executions: await db.executions.toArray(),
       tags: await db.tags.toArray(),
       tradeTags: await db.tradeTags.toArray(),
-      playbooks: await db.playbooks.toArray(),
       dayNotes: await db.dayNotes.toArray(),
+      noteFolders: await db.noteFolders.toArray(),
       notes: await db.notes.toArray(),
       importTemplates: await db.importTemplates.toArray(),
       settings: await db.settings.toArray(),
@@ -105,46 +120,181 @@ export function SettingsPage() {
   };
 
   const handleImport = () => {
+    setStatus(null);
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const text = await file.text();
-      const data = JSON.parse(text);
-      if (confirm('This will replace all existing data. Continue?')) {
-        await db.transaction('rw', [db.accounts, db.trades, db.executions, db.tags, db.tradeTags, db.playbooks, db.dayNotes, db.notes], async () => {
-          await db.accounts.bulkPut(data.accounts ?? []);
-          await db.trades.bulkPut(data.trades ?? []);
-          await db.executions.bulkPut(data.executions ?? []);
-          await db.tags.bulkPut(data.tags ?? []);
-          await db.tradeTags.bulkPut(data.tradeTags ?? []);
-          await db.playbooks.bulkPut(data.playbooks ?? []);
-          await db.dayNotes.bulkPut(data.dayNotes ?? []);
-          await db.notes.bulkPut(data.notes ?? []);
-        });
-        alert('Import complete!');
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        setPending({ kind: 'import', data });
+      } catch {
+        setStatus('That file is not a valid backup.');
       }
     };
     input.click();
   };
 
-  const handleClearData = async () => {
-    if (confirm('This will permanently delete ALL data. Are you sure?')) {
-      if (confirm('Really sure? This cannot be undone.')) {
-        await db.delete();
-        window.location.reload();
+  const runImport = async (data: Record<string, unknown>) => {
+    // Older backups contain a `playbooks` key and playbookId/ruleChecklist on
+    // trades. Those fields no longer exist, so strip them and skip the key
+    // rather than crashing or reintroducing removed data.
+    const sanitizeTrade = (trade: Record<string, unknown>) => {
+      const copy = { ...trade };
+      delete copy.playbookId;
+      delete copy.ruleChecklist;
+      return copy;
+    };
+    const trades = ((data.trades ?? []) as unknown as Record<string, unknown>[]).map(sanitizeTrade);
+
+    // v3 schema: notes reference folders by id. Older backups stored the
+    // folder *name* directly on the note and had no noteFolders table, so
+    // rebuild the folders from those names and re-point the notes.
+    const sanitizeNote = (note: Record<string, unknown>, folderIdByName: Map<string, string>) => {
+      const copy = { ...note };
+      if (typeof copy.folderId !== 'string') {
+        const name = typeof copy.folder === 'string' ? copy.folder : null;
+        copy.folderId = name ? (folderIdByName.get(name) ?? null) : null;
+      }
+      delete copy.folder;
+      return copy;
+    };
+
+    const folders: NoteFolder[] = [...(Array.isArray(data.noteFolders) ? data.noteFolders : [])];
+    const folderIdByName = new Map<string, string>(
+      folders
+        .filter((f) => typeof f.name === 'string' && typeof f.id === 'string')
+        .map((f) => [f.name, f.id] as [string, string])
+    );
+    // Create folders referenced only by legacy notes (name stored on note).
+    const rawNotes = (data.notes ?? []) as unknown as Record<string, unknown>[];
+    for (const note of rawNotes) {
+      const name = typeof note.folder === 'string' ? note.folder : null;
+      if (name && !folderIdByName.has(name)) {
+        const id = crypto.randomUUID();
+        folderIdByName.set(name, id);
+        folders.push({ id, name, createdAt: Date.now() });
       }
     }
+    const knownFolderIds = new Set(folders.map((f) => String(f.id)));
+    const notes = rawNotes.map((n) => sanitizeNote(n, folderIdByName)) as unknown as Note[];
+    for (const note of notes) {
+      if (note.folderId && !knownFolderIds.has(String(note.folderId))) {
+        note.folderId = null;
+      }
+    }
+
+    await db.transaction(
+      'rw',
+      [
+        db.accounts,
+        db.trades,
+        db.executions,
+        db.tags,
+        db.tradeTags,
+        db.dayNotes,
+        db.noteFolders,
+        db.notes
+      ],
+      async () => {
+        // A restore *replaces* the current data — clear first so records that
+        // are absent from the backup don't linger alongside the import.
+        await Promise.all([
+          db.accounts.clear(),
+          db.trades.clear(),
+          db.executions.clear(),
+          db.tags.clear(),
+          db.tradeTags.clear(),
+          db.dayNotes.clear(),
+          db.noteFolders.clear(),
+          db.notes.clear()
+        ]);
+        await db.accounts.bulkPut((data.accounts ?? []) as unknown as Account[]);
+        await db.trades.bulkPut(trades as unknown as Trade[]);
+        await db.executions.bulkPut((data.executions ?? []) as unknown as Execution[]);
+        await db.tags.bulkPut((data.tags ?? []) as unknown as Tag[]);
+        await db.tradeTags.bulkPut((data.tradeTags ?? []) as unknown as TradeTag[]);
+        await db.dayNotes.bulkPut((data.dayNotes ?? []) as unknown as DayNote[]);
+        await db.noteFolders.bulkPut(folders);
+        await db.notes.bulkPut(notes);
+      }
+    );
+    setStatus('Import complete.');
   };
 
-  const handleReseed = async () => {
-    if (confirm('This will replace all data with demo data. Continue?')) {
-      await seed();
-      window.location.reload();
+  const handleClearData = () => setPending({ kind: 'clear' });
+
+  const handleReseed = () => setPending({ kind: 'reseed' });
+
+  const confirmPending = async () => {
+    if (!pending) return;
+    switch (pending.kind) {
+      case 'account':
+        await repositories.accounts.delete(pending.id);
+        break;
+      case 'tag':
+        await repositories.tags.delete(pending.id);
+        break;
+      case 'import':
+        await runImport(pending.data);
+        break;
+      case 'clear':
+        await db.delete();
+        window.location.reload();
+        return;
+      case 'reseed':
+        // Wipe and reload: App's first-run check sees an empty database and
+        // seeds a fresh demo dataset. Calling seed() directly would append a
+        // second copy of the demo trades on top of the existing ones.
+        await db.delete();
+        window.location.reload();
+        return;
     }
+    setPending(null);
   };
+
+  const pendingDialog = (() => {
+    switch (pending?.kind) {
+      case 'account':
+        return {
+          title: 'Delete this account?',
+          description: 'All trades in this account will be removed. This cannot be undone.',
+          confirmLabel: 'Delete account'
+        };
+      case 'tag':
+        return {
+          title: 'Delete this tag?',
+          description: 'The tag will be removed from all trades. This cannot be undone.',
+          confirmLabel: 'Delete tag'
+        };
+      case 'import':
+        return {
+          title: 'Replace all existing data?',
+          description:
+            'Importing this backup replaces your current trades, notes, tags and accounts. This cannot be undone.',
+          confirmLabel: 'Import backup'
+        };
+      case 'clear':
+        return {
+          title: 'Delete ALL data?',
+          description:
+            'Every trade, note, account and setting will be permanently deleted. This cannot be undone.',
+          confirmLabel: 'Delete everything'
+        };
+      case 'reseed':
+        return {
+          title: 'Replace data with demo data?',
+          description:
+            'Your current trades, notes and tags will be replaced with ~300 demo trades. This cannot be undone.',
+          confirmLabel: 'Re-seed demo data'
+        };
+      default:
+        return null;
+    }
+  })();
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -260,7 +410,7 @@ export function SettingsPage() {
                   <Button
                     variant={theme === 'light' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setTheme('light')}
+                    onClick={() => handleSetTheme('light')}
                   >
                     <Sun className="h-4 w-4" />
                     Light
@@ -268,7 +418,7 @@ export function SettingsPage() {
                   <Button
                     variant={theme === 'dark' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setTheme('dark')}
+                    onClick={() => handleSetTheme('dark')}
                   >
                     <Moon className="h-4 w-4" />
                     Dark
@@ -276,7 +426,7 @@ export function SettingsPage() {
                   <Button
                     variant={theme === 'system' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setTheme('system')}
+                    onClick={() => handleSetTheme('system')}
                   >
                     <Monitor className="h-4 w-4" />
                     System
@@ -363,6 +513,11 @@ export function SettingsPage() {
                   Import Backup
                 </Button>
               </div>
+              {status && (
+                <p role="status" className="text-sm text-profit">
+                  {status}
+                </p>
+              )}
 
               <Separator />
 
@@ -394,6 +549,18 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {pending && pendingDialog && (
+        <ConfirmDialog
+          open
+          title={pendingDialog.title}
+          description={pendingDialog.description}
+          confirmLabel={pendingDialog.confirmLabel}
+          destructive={pending.kind !== 'import' && pending.kind !== 'reseed'}
+          onConfirm={() => void confirmPending()}
+          onCancel={() => setPending(null)}
+        />
+      )}
     </div>
   );
 }

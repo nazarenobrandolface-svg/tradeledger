@@ -19,7 +19,7 @@ import { PnLDisplay } from '@/components/shared/PnLDisplay';
 import { TagBadge } from '@/components/shared/TagBadge';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useTags, usePlaybooks } from '@/hooks/useRepositories';
+import { useTags, useNotesForTrade } from '@/hooks/useRepositories';
 import {
   Select,
   SelectContent,
@@ -29,27 +29,28 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 export function TradeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const trade = useLiveQuery(() => repositories.trades.getWithExecutions(id ?? ''), [id]);
   const tags = useTags();
-  const playbooks = usePlaybooks();
   const tradeTags = useLiveQuery(
     () => (id ? repositories.tags.getTagsForTrade(id) : Promise.resolve([])),
     [id]
   );
 
+  const linkedNotes = useNotesForTrade(id);
+
   const [notes, setNotes] = useState('');
   const [rating, setRating] = useState<number | null>(null);
-  const [playbookId, setPlaybookId] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     if (trade) {
       setNotes(trade.notes);
       setRating(trade.rating);
-      setPlaybookId(trade.playbookId);
     }
   }, [trade]);
 
@@ -75,8 +76,7 @@ export function TradeDetailPage() {
   const handleSave = async () => {
     await repositories.trades.update(trade.id, {
       notes,
-      rating,
-      playbookId
+      rating
     });
   };
 
@@ -88,11 +88,14 @@ export function TradeDetailPage() {
     await repositories.tags.removeTagFromTrade(trade.id, tagId);
   };
 
-  const handleDelete = async () => {
-    if (confirm('Delete this trade?')) {
-      await repositories.trades.delete(trade.id);
-      navigate('/trades');
-    }
+  const handleDelete = () => {
+    setConfirmingDelete(true);
+  };
+
+  const runDelete = async () => {
+    setConfirmingDelete(false);
+    await repositories.trades.delete(trade.id);
+    navigate('/trades');
   };
 
   const unselectedTags = tags.filter((t) => !tradeTags?.some((tt) => tt.id === t.id));
@@ -266,7 +269,7 @@ export function TradeDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Rating & Playbook</CardTitle>
+            <CardTitle className="text-sm font-medium">Rating</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -292,29 +295,6 @@ export function TradeDetailPage() {
                 ))}
               </div>
             </div>
-            <div>
-              <div className="mb-2 text-sm text-muted-foreground">Playbook</div>
-              <Select
-                value={playbookId ?? 'none'}
-                onValueChange={(v) => {
-                  const id = v === 'none' ? null : v;
-                  setPlaybookId(id);
-                  repositories.trades.update(trade.id, { playbookId: id });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select playbook" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {playbooks.map((pb) => (
-                    <SelectItem key={pb.id} value={pb.id}>
-                      {pb.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -335,6 +315,56 @@ export function TradeDetailPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-sm font-medium">Linked journal notes</CardTitle>
+          <Button variant="outline" size="sm" onClick={() => navigate('/notebook')}>
+            Open Notebook
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {linkedNotes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No linked notes yet. Link this trade from a note in the Notebook.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {linkedNotes.map((note) => (
+                <li key={note.id}>
+                  <button
+                    onClick={() => navigate(`/notebook?note=${note.id}`)}
+                    className="w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted/60"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-medium">
+                        {note.title || 'Untitled'}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {format(note.updatedAt, 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      {note.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() ||
+                        'Empty note'}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Delete this trade?"
+        description="The trade and all of its executions will be removed. This cannot be undone."
+        confirmLabel="Delete trade"
+        destructive
+        onConfirm={() => void runDelete()}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAccounts, usePlaybooks } from '@/hooks/useRepositories';
+import { useAccounts } from '@/hooks/useRepositories';
 import { repositories } from '@/repositories';
 import { generateId } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,6 @@ interface ExecutionRow {
 export function TradeFormPage() {
   const navigate = useNavigate();
   const accounts = useAccounts();
-  const playbooks = usePlaybooks();
 
   const [accountId, setAccountId] = useState('');
   const [symbol, setSymbol] = useState('');
@@ -37,7 +36,6 @@ export function TradeFormPage() {
   const [plannedEntry, setPlannedEntry] = useState('');
   const [plannedStop, setPlannedStop] = useState('');
   const [plannedTarget, setPlannedTarget] = useState('');
-  const [playbookId, setPlaybookId] = useState('none');
   const [notes, setNotes] = useState('');
   const [executions, setExecutions] = useState<ExecutionRow[]>([
     {
@@ -125,10 +123,8 @@ export function TradeFormPage() {
       plannedEntry: plannedEntry ? parseFloat(plannedEntry) : null,
       plannedStop: plannedStop ? parseFloat(plannedStop) : null,
       plannedTarget: plannedTarget ? parseFloat(plannedTarget) : null,
-      playbookId: playbookId === 'none' ? null : playbookId,
       rating: null,
-      notes,
-      ruleChecklist: {}
+      notes
     });
 
     for (const exec of executions) {
@@ -197,22 +193,6 @@ export function TradeFormPage() {
                 <SelectContent>
                   <SelectItem value="long">Long</SelectItem>
                   <SelectItem value="short">Short</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Playbook</Label>
-              <Select value={playbookId} onValueChange={setPlaybookId}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {playbooks.map((pb) => (
-                    <SelectItem key={pb.id} value={pb.id}>
-                      {pb.name}
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -9,11 +9,17 @@ export interface DayNote {
   updatedAt: number;
 }
 
+export interface NoteFolder {
+  id: string;
+  name: string;
+  createdAt: number;
+}
+
 export interface Note {
   id: string;
   title: string;
   content: string;
-  folder: string | null;
+  folderId: string | null;
   tags: string[];
   linkedTradeIds: string[];
   linkedDates: string[];
@@ -21,6 +27,9 @@ export interface Note {
   createdAt: number;
   updatedAt: number;
 }
+
+/** How to handle notes left inside a folder that is being deleted. */
+export type FolderDeleteMode = 'keepNotes' | 'deleteNotes';
 
 export interface Attachment {
   id: string;

@@ -6,43 +6,48 @@ export default {
   theme: {
     extend: {
       colors: {
+        // All semantic colors reference the CSS variables in index.css so the
+        // `dark` class on <html> drives every surface/text/border color.
+        border: 'hsl(var(--border) / <alpha-value>)',
+        input: 'hsl(var(--input) / <alpha-value>)',
+        ring: 'hsl(var(--ring) / <alpha-value>)',
+        background: 'hsl(var(--background) / <alpha-value>)',
+        foreground: 'hsl(var(--foreground) / <alpha-value>)',
         primary: {
-          DEFAULT: '#6C5CE7',
-          50: '#EDEBFC',
-          100: '#D5D1F8',
-          200: '#ABA3F1',
-          300: '#8275EA',
-          400: '#6C5CE7',
-          500: '#5A4BD4',
-          600: '#4A3DC0',
-          700: '#3B309C',
-          800: '#2B2378',
-          900: '#1C1754',
-          foreground: '#FFFFFF'
+          DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
+          foreground: 'hsl(var(--primary-foreground) / <alpha-value>)'
         },
-        profit: '#16C784',
-        loss: '#EA3943',
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
+          foreground: 'hsl(var(--secondary-foreground) / <alpha-value>)'
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive) / <alpha-value>)',
+          foreground: 'hsl(var(--destructive-foreground) / <alpha-value>)'
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted) / <alpha-value>)',
+          foreground: 'hsl(var(--muted-foreground) / <alpha-value>)'
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          foreground: 'hsl(var(--accent-foreground) / <alpha-value>)'
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
+          foreground: 'hsl(var(--popover-foreground) / <alpha-value>)'
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card) / <alpha-value>)',
+          foreground: 'hsl(var(--card-foreground) / <alpha-value>)'
+        },
+        profit: 'hsl(var(--profit) / <alpha-value>)',
+        loss: 'hsl(var(--loss) / <alpha-value>)',
         navy: {
           DEFAULT: '#0F1222',
           800: '#1A1E35',
           700: '#252A44',
           600: '#313655'
-        },
-        background: '#F6F7FB',
-        card: '#FFFFFF',
-        border: '#E8EAF0',
-        muted: {
-          DEFAULT: '#F1F2F6',
-          foreground: '#6B7280'
-        },
-        foreground: '#1F2937',
-        accent: {
-          DEFAULT: '#F1F2F6',
-          foreground: '#1F2937'
-        },
-        destructive: {
-          DEFAULT: '#EA3943',
-          foreground: '#FFFFFF'
         }
       },
       borderRadius: {

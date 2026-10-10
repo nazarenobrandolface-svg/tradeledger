@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   useTradesWithExecutions,
   useTags,
-  usePlaybooks,
   useDefaultAccount
 } from '@/hooks/useRepositories';
 import { useFilterStore } from '@/stores/filterStore';
@@ -33,6 +32,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ArrowLeftRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { repositories } from '@/repositories';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 const PAGE_SIZE = 25;
 
@@ -45,18 +45,17 @@ export function TradesPage() {
     accountId: accountId ?? undefined
   });
   const tags = useTags();
-  const playbooks = usePlaybooks();
   const account = useDefaultAccount();
 
   const [search, setSearch] = useState('');
   const [sideFilter, setSideFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
-  const [setupFilter, setSetupFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('closedAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
 
   const filtered = useMemo(() => {
     if (!trades) return [];
@@ -71,9 +70,6 @@ export function TradesPage() {
     if (outcomeFilter !== 'all') {
       list = list.filter((t) => calcTradeOutcome(t.executions) === outcomeFilter);
     }
-    if (setupFilter !== 'all') {
-      list = list.filter((t) => t.playbookId === setupFilter);
-    }
 
     list.sort((a, b) => {
       let cmp = 0;
@@ -86,7 +82,7 @@ export function TradesPage() {
     });
 
     return list;
-  }, [trades, search, sideFilter, statusFilter, outcomeFilter, setupFilter, sortField, sortDir]);
+  }, [trades, search, sideFilter, statusFilter, outcomeFilter, sortField, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -117,12 +113,15 @@ export function TradesPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selected.size === 0) return;
-    if (confirm(`Delete ${selected.size} trades? This cannot be undone.`)) {
-      await repositories.trades.bulkDelete(Array.from(selected));
-      setSelected(new Set());
-    }
+    setConfirmingBulkDelete(true);
+  };
+
+  const runBulkDelete = async () => {
+    setConfirmingBulkDelete(false);
+    await repositories.trades.bulkDelete(Array.from(selected));
+    setSelected(new Set());
   };
 
   const handleBulkTag = async (tagId: string) => {
@@ -134,8 +133,16 @@ export function TradesPage() {
 
   const SortHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
     <TableHead
-      className="cursor-pointer select-none hover:text-foreground"
+      aria-sort={sortField === field ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      className="cursor-pointer select-none hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={() => toggleSort(field)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleSort(field);
+        }
+      }}
+      tabIndex={0}
     >
       <span className="inline-flex items-center gap-1">
         {children}
@@ -202,19 +209,6 @@ export function TradesPage() {
             <SelectItem value="breakeven">Breakeven</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={setupFilter} onValueChange={(v) => { setSetupFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Playbooks" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Playbooks</SelectItem>
-            {playbooks.map((pb) => (
-              <SelectItem key={pb.id} value={pb.id}>
-                {pb.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <div className="ml-auto text-sm text-muted-foreground">
           {filtered.length} trades
         </div>
@@ -264,14 +258,13 @@ export function TradesPage() {
                 <TableHead>Exit</TableHead>
                 <SortHeader field="pnl">Net P&L</SortHeader>
                 <TableHead>R</TableHead>
-                <TableHead>Playbook</TableHead>
                 <TableHead>Tags</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paged.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={11} className="py-12 text-center text-muted-foreground">
                     No trades match your filters
                   </TableCell>
                 </TableRow>
@@ -283,7 +276,6 @@ export function TradesPage() {
                   const qty = calcTotalQuantity(trade.executions);
                   const entry = calcAvgEntryPrice(trade.executions);
                   const exit = calcAvgExitPrice(trade.executions);
-                  const playbook = playbooks.find((p) => p.id === trade.playbookId);
 
                   return (
                     <TableRow
@@ -336,7 +328,6 @@ export function TradesPage() {
                           '—'
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">{playbook?.name ?? '—'}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           {tags
@@ -385,6 +376,16 @@ export function TradesPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmingBulkDelete}
+        title={`Delete ${selected.size} trade${selected.size === 1 ? '' : 's'}?`}
+        description="The selected trades and their executions will be removed. This cannot be undone."
+        confirmLabel={`Delete ${selected.size} trade${selected.size === 1 ? '' : 's'}`}
+        destructive
+        onConfirm={() => void runBulkDelete()}
+        onCancel={() => setConfirmingBulkDelete(false)}
+      />
     </div>
   );
 }

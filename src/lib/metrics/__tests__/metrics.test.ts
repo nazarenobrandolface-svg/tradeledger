@@ -34,10 +34,8 @@ function makeTrade(partial: Partial<Trade>): Trade {
     plannedEntry: null,
     plannedStop: null,
     plannedTarget: null,
-    playbookId: null,
     rating: null,
     notes: '',
-    ruleChecklist: {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
     ...partial

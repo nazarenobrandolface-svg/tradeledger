@@ -9,8 +9,7 @@ A production-quality Progressive Web App for trading journal and analytics.
 - **Trades** — Sortable/filterable table with bulk actions, trade detail with executions and tags
 - **Manual Entry** — Multi-execution trade form with validation
 - **CSV Import** — Upload, map columns, preview, and import with reusable templates
-- **Reports** — Overview, by symbol, by setup, risk analysis with R-multiples and drawdown
-- **Playbooks** — Strategy definitions with rule checklists and per-playbook stats
+- **Reports** — Overview, by symbol, by tag, risk analysis with R-multiples and drawdown
 - **Notebook** — Folder-based notes with tags and trade links
 - **Settings** — Accounts, tags, theme, backup/restore, demo data
 
@@ -62,6 +61,6 @@ The app is installable and works fully offline. On first run, ~300 demo trades a
 
 ## Data Model
 
-Dexie tables: accounts, trades, executions, tags, tradeTags, playbooks, playbookRules, dayNotes, notes, attachments, importTemplates, settings
+Dexie tables: accounts, trades, executions, tags, tradeTags, dayNotes, notes, attachments, importTemplates, settings
 
 All derived metrics (net P&L, R-multiple, hold time, status) are computed on-the-fly, never stored.

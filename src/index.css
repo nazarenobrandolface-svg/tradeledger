@@ -4,13 +4,15 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    /* Light palette — matches the original design tokens
+       (#F6F7FB page, #6C5CE7 brand purple, #16C784 / #EA3943 P&L) */
+    --background: 224 38% 97%;
     --foreground: 220 9% 20%;
     --card: 0 0% 100%;
     --card-foreground: 220 9% 20%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 9% 20%;
-    --primary: 249 84% 67%;
+    --primary: 247 74% 63%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 96%;
     --secondary-foreground: 220 9% 20%;
@@ -18,13 +20,13 @@
     --muted-foreground: 220 9% 46%;
     --accent: 220 14% 96%;
     --accent-foreground: 220 9% 20%;
-    --destructive: 357 70% 57%;
+    --destructive: 357 81% 57%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 249 84% 67%;
-    --profit: 157 64% 52%;
-    --loss: 357 70% 57%;
+    --ring: 247 74% 63%;
+    --profit: 128 80% 43%;
+    --loss: 357 81% 57%;
     --radius: 0.75rem;
   }
 
@@ -35,7 +37,7 @@
     --card-foreground: 220 14% 96%;
     --popover: 232 28% 13%;
     --popover-foreground: 220 14% 96%;
-    --primary: 249 84% 67%;
+    --primary: 247 74% 63%;
     --primary-foreground: 0 0% 100%;
     --secondary: 232 20% 18%;
     --secondary-foreground: 220 14% 96%;
@@ -43,13 +45,13 @@
     --muted-foreground: 220 9% 65%;
     --accent: 232 20% 18%;
     --accent-foreground: 220 14% 96%;
-    --destructive: 357 70% 57%;
+    --destructive: 357 81% 57%;
     --destructive-foreground: 0 0% 100%;
     --border: 232 20% 18%;
     --input: 232 20% 18%;
-    --ring: 249 84% 67%;
-    --profit: 157 64% 52%;
-    --loss: 357 70% 57%;
+    --ring: 247 74% 63%;
+    --profit: 128 80% 43%;
+    --loss: 357 81% 57%;
   }
 }
 
@@ -100,6 +102,88 @@
 :focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
+}
+
+/* Tiptap / ProseMirror rich-text content */
+.ProseMirror {
+  min-height: 240px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  outline: none;
+  color: hsl(var(--foreground));
+}
+.ProseMirror p {
+  margin: 0.35rem 0;
+}
+.ProseMirror h1 {
+  margin: 1rem 0 0.4rem;
+  font-size: 1.4rem;
+  font-weight: 650;
+}
+.ProseMirror h2 {
+  margin: 0.9rem 0 0.35rem;
+  font-size: 1.2rem;
+  font-weight: 620;
+}
+.ProseMirror h3 {
+  margin: 0.75rem 0 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 0.4rem 0;
+}
+.ProseMirror ul {
+  list-style: disc;
+}
+.ProseMirror ol {
+  list-style: decimal;
+}
+.ProseMirror li {
+  margin: 0.15rem 0;
+}
+.ProseMirror a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ProseMirror blockquote {
+  margin: 0.6rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+}
+.ProseMirror code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: hsl(var(--muted));
+  font-size: 0.85em;
+}
+.ProseMirror pre {
+  margin: 0.6rem 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  background: hsl(var(--muted));
+  overflow-x: auto;
+}
+.ProseMirror pre code {
+  padding: 0;
+  background: none;
+}
+.ProseMirror hr {
+  margin: 1rem 0;
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
 }
 
 /* Skeleton shimmer */
