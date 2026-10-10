@@ -29,14 +29,22 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signIn: async (email, password) => {
     if (!supabase) return { error: null };
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error ? error.message : null };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    // Set the session immediately so navigation doesn't race the auth listener.
+    if (data.session) {
+      set({ session: data.session, user: data.session.user, initialized: true });
+    }
+    return { error: null };
   },
 
   signUp: async (email, password) => {
     if (!supabase) return { error: null, needsConfirmation: false };
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message, needsConfirmation: false };
+    if (data.session) {
+      set({ session: data.session, user: data.session.user, initialized: true });
+    }
     // No session back = the project has "Confirm email" enabled.
     return { error: null, needsConfirmation: !data.session };
   },

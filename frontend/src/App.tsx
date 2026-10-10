@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
@@ -37,7 +37,6 @@ function NotFoundPage() {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, initialized } = useAuthStore();
-  const location = useLocation();
 
   if (!initialized) {
     return (
@@ -46,15 +45,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  if (!session) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location.pathname + location.search }}
-      />
-    );
-  }
+  if (!session) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 

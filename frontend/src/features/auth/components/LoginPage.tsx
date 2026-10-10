@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,6 @@ type AuthMode = 'signin' | 'signup';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { session, initialized, signIn, signUp } = useAuthStore();
 
   const [mode, setMode] = useState<AuthMode>('signin');
@@ -24,8 +23,6 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const from = (location.state as { from?: string } | null)?.from ?? '/dashboard';
-
   if (!isSupabaseConfigured) return <Navigate to="/dashboard" replace />;
   if (!initialized) {
     return (
@@ -34,7 +31,8 @@ export function LoginPage() {
       </div>
     );
   }
-  if (session) return <Navigate to={from} replace />;
+  // Already signed in (or just finished) — always land on the dashboard.
+  if (session) return <Navigate to="/dashboard" replace />;
 
   const switchMode = (value: string) => {
     setMode(value as AuthMode);
@@ -73,7 +71,7 @@ export function LoginPage() {
           setError(result.error);
           return;
         }
-        navigate(from, { replace: true });
+        navigate('/dashboard', { replace: true });
       } else {
         const result = await signUp(trimmedEmail, password);
         if (result.error) {
@@ -87,7 +85,7 @@ export function LoginPage() {
           setConfirm('');
           return;
         }
-        navigate(from, { replace: true });
+        navigate('/dashboard', { replace: true });
       }
     } finally {
       setLoading(false);
