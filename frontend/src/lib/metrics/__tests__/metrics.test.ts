@@ -27,6 +27,7 @@ function makeTrade(partial: Partial<Trade>): Trade {
     id: 't1',
     accountId: 'a1',
     symbol: 'AAPL',
+    category: null,
     side: 'long',
     status: 'closed',
     openedAt: Date.now(),

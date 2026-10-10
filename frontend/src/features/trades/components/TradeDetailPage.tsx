@@ -17,7 +17,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PnLDisplay } from '@/components/shared/PnLDisplay';
 import { TagBadge } from '@/components/shared/TagBadge';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, XCircle } from 'lucide-react';
+import { TRADE_CATEGORIES, type TradeCategory } from '@/types/trade';
+import { formatCategory } from '@/lib/formatters';
+import { CloseTradeDialog } from './CloseTradeDialog';
 import { useState, useEffect } from 'react';
 import { useTags, useNotesForTrade } from '@/hooks/useRepositories';
 import {
@@ -46,6 +49,7 @@ export function TradeDetailPage() {
   const [notes, setNotes] = useState('');
   const [rating, setRating] = useState<number | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [closingTrade, setClosingTrade] = useState(false);
 
   useEffect(() => {
     if (trade) {
@@ -107,10 +111,18 @@ export function TradeDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to Trades
         </Button>
-        <Button variant="destructive" size="sm" onClick={handleDelete}>
-          <Trash2 className="h-4 w-4" />
-          Delete
-        </Button>
+        <div className="flex gap-2">
+          {trade.status === 'open' && (
+            <Button size="sm" onClick={() => setClosingTrade(true)}>
+              <XCircle className="h-4 w-4" />
+              Close Trade
+            </Button>
+          )}
+          <Button variant="destructive" size="sm" onClick={handleDelete}>
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -126,6 +138,12 @@ export function TradeDetailPage() {
                 <span>
                   {trade.status === 'open' ? 'Open' : outcome}
                 </span>
+                {trade.category && (
+                  <>
+                    <span>·</span>
+                    <span>{formatCategory(trade.category)}</span>
+                  </>
+                )}
               </div>
             </div>
             <div className="text-right">
@@ -236,7 +254,7 @@ export function TradeDetailPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Tags</CardTitle>
@@ -264,6 +282,36 @@ export function TradeDetailPage() {
                 </SelectContent>
               </Select>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={trade.category ?? ''}
+              onValueChange={(v) =>
+                void repositories.trades.update(trade.id, {
+                  category: v ? (v as TradeCategory) : null
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {TRADE_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {formatCategory(c)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Forex, indices, futures or stocks.
+            </p>
           </CardContent>
         </Card>
 
@@ -364,6 +412,12 @@ export function TradeDetailPage() {
         destructive
         onConfirm={() => void runDelete()}
         onCancel={() => setConfirmingDelete(false)}
+      />
+
+      <CloseTradeDialog
+        trade={trade}
+        open={closingTrade}
+        onOpenChange={setClosingTrade}
       />
     </div>
   );

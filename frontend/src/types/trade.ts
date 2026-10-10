@@ -15,10 +15,14 @@ export type TradeSide = 'long' | 'short';
 export type TradeStatus = 'open' | 'closed';
 export type TradeOutcome = 'win' | 'loss' | 'breakeven';
 
+export const TRADE_CATEGORIES = ['forex', 'indices', 'futures', 'stocks'] as const;
+export type TradeCategory = (typeof TRADE_CATEGORIES)[number];
+
 export interface Trade {
   id: string;
   accountId: string;
   symbol: string;
+  category: TradeCategory | null;
   side: TradeSide;
   status: TradeStatus;
   openedAt: number;

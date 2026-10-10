@@ -112,6 +112,21 @@ export class TradeLedgerDB extends Dexie {
           await notesTable.put(note);
         }
       });
+    // v4: trade asset-class category (forex / indices / futures / stocks).
+    // Existing rows simply have no category; the index is built automatically.
+    this.version(4).stores({
+      accounts: 'id, name, isDefault',
+      trades: 'id, accountId, symbol, status, openedAt, closedAt, category',
+      executions: 'id, tradeId, executedAt',
+      tags: 'id, name, category',
+      tradeTags: '[tradeId+tagId], tradeId, tagId',
+      noteFolders: 'id, name',
+      dayNotes: 'id, [accountId+date], date',
+      notes: 'id, title, folderId, pinned, createdAt, updatedAt',
+      attachments: 'id, tradeId, noteId, dayNoteId',
+      importTemplates: 'id, name, broker',
+      settings: 'key'
+    });
   }
 }
 

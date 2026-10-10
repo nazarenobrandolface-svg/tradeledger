@@ -43,6 +43,13 @@ export function formatTradeCount(value: number): string {
   return `${value} ${value === 1 ? 'trade' : 'trades'}`;
 }
 
+export function formatCategory(
+  category: 'forex' | 'indices' | 'futures' | 'stocks' | null | undefined
+): string {
+  if (!category) return '—';
+  return category.charAt(0).toUpperCase() + category.slice(1);
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const kb = bytes / 1024;

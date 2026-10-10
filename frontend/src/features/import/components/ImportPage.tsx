@@ -102,6 +102,7 @@ export function ImportPage() {
         id: tradeId,
         accountId,
         symbol: symbol.toUpperCase(),
+        category: null,
         side,
         status: isClosed ? 'closed' : 'open',
         openedAt: openDate ?? Date.now(),

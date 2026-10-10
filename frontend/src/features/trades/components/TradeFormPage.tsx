@@ -16,6 +16,8 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { TRADE_CATEGORIES, type TradeCategory } from '@/types/trade';
+import { formatCategory } from '@/lib/formatters';
 
 interface ExecutionRow {
   id: string;
@@ -32,6 +34,7 @@ export function TradeFormPage() {
 
   const [accountId, setAccountId] = useState('');
   const [symbol, setSymbol] = useState('');
+  const [category, setCategory] = useState<TradeCategory | ''>('');
   const [side, setSide] = useState<'long' | 'short'>('long');
   const [plannedEntry, setPlannedEntry] = useState('');
   const [plannedStop, setPlannedStop] = useState('');
@@ -78,6 +81,7 @@ export function TradeFormPage() {
 
     if (!symbol.trim()) errs.symbol = 'Symbol is required';
     if (!accountId) errs.accountId = 'Account is required';
+    if (!category) errs.category = 'Category is required';
 
     const entryExecs = executions.filter((e) => e.type === 'entry');
 
@@ -116,6 +120,7 @@ export function TradeFormPage() {
       id: tradeId,
       accountId,
       symbol: symbol.toUpperCase().trim(),
+      category: category || null,
       side,
       status: isClosed ? 'closed' : 'open',
       openedAt: new Date(firstEntry?.executedAt ?? Date.now()).getTime(),
@@ -195,6 +200,25 @@ export function TradeFormPage() {
                   <SelectItem value="short">Short</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Category *</Label>
+              <Select
+                value={category}
+                onValueChange={(v) => setCategory(v as TradeCategory)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TRADE_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {formatCategory(c)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.category && <p className="text-xs text-loss">{errors.category}</p>}
             </div>
           </div>
 

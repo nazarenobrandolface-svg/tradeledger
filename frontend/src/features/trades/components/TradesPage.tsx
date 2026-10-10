@@ -30,6 +30,8 @@ import { PnLDisplay } from '@/components/shared/PnLDisplay';
 import { TagBadge } from '@/components/shared/TagBadge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ArrowLeftRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TRADE_CATEGORIES } from '@/types/trade';
+import { formatCategory } from '@/lib/formatters';
 import { repositories } from '@/repositories';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -51,6 +53,7 @@ export function TradesPage() {
   const [sideFilter, setSideFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [outcomeFilter, setOutcomeFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('closedAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
@@ -70,6 +73,13 @@ export function TradesPage() {
     if (outcomeFilter !== 'all') {
       list = list.filter((t) => calcTradeOutcome(t.executions) === outcomeFilter);
     }
+    if (categoryFilter !== 'all') {
+      list = list.filter((t) =>
+        categoryFilter === 'uncategorized'
+          ? !t.category
+          : t.category === categoryFilter
+      );
+    }
 
     list.sort((a, b) => {
       let cmp = 0;
@@ -82,7 +92,7 @@ export function TradesPage() {
     });
 
     return list;
-  }, [trades, search, sideFilter, statusFilter, outcomeFilter, sortField, sortDir]);
+  }, [trades, search, sideFilter, statusFilter, outcomeFilter, categoryFilter, sortField, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -209,6 +219,20 @@ export function TradesPage() {
             <SelectItem value="breakeven">Breakeven</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {TRADE_CATEGORIES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {formatCategory(c)}
+              </SelectItem>
+            ))}
+            <SelectItem value="uncategorized">Uncategorized</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="ml-auto text-sm text-muted-foreground">
           {filtered.length} trades
         </div>
@@ -292,7 +316,12 @@ export function TradesPage() {
                       <TableCell className="text-sm text-muted-foreground">
                         {trade.closedAt ? format(trade.closedAt, 'MMM d, HH:mm') : '—'}
                       </TableCell>
-                      <TableCell className="font-semibold">{trade.symbol}</TableCell>
+                      <TableCell>
+                        <div className="font-semibold">{trade.symbol}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatCategory(trade.category)}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <span
                           className={`text-xs font-medium ${trade.side === 'long' ? 'text-profit' : 'text-loss'}`}

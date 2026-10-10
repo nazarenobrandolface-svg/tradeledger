@@ -1,8 +1,26 @@
 import { db } from './database';
 import { generateId } from '@/lib/utils';
+import type { TradeCategory } from '@/types/trade';
 import { format, subDays, addDays, setHours, setMinutes } from 'date-fns';
 
-const SYMBOLS = ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMD', 'META', 'GOOGL', 'AMZN', 'SPY', 'QQQ', 'JPM', 'NFLX'];
+interface AssetPool {
+  category: TradeCategory;
+  symbols: string[];
+  min: number;
+  max: number;
+}
+
+const ASSET_POOLS: AssetPool[] = [
+  {
+    category: 'stocks',
+    symbols: ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMD', 'META', 'GOOGL', 'AMZN', 'JPM', 'NFLX'],
+    min: 50,
+    max: 500
+  },
+  { category: 'indices', symbols: ['SPY', 'QQQ', 'DIA', 'IWM'], min: 100, max: 600 },
+  { category: 'futures', symbols: ['ES', 'NQ', 'CL', 'GC', 'SI'], min: 20, max: 500 },
+  { category: 'forex', symbols: ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD'], min: 0.7, max: 1.6 }
+];
 const SETUPS = ['Breakout', 'Pullback', 'Gap Fill', 'VWAP Reclaim', 'Opening Range', 'Mean Reversion'];
 const MISTAKES = ['FOMO', 'Oversized', 'Early Exit', 'No Stop', 'Revenge Trade', 'Chased'];
 const EMOTIONS = ['Confident', 'Anxious', 'Patient', 'Impulsive', 'Focused', 'Distracted'];
@@ -110,11 +128,12 @@ async function seed() {
       const tradesToday = randomInt(0, 5);
 
       for (let i = 0; i < tradesToday; i++) {
-        const symbol = pick(SYMBOLS);
+        const pool = pick(ASSET_POOLS);
+        const symbol = pick(pool.symbols);
         const side = Math.random() > 0.5 ? ('long' as const) : ('short' as const);
         const account = Math.random() > 0.3 ? accountId : secondAccountId;
 
-        const entryPrice = randomBetween(50, 500);
+        const entryPrice = randomBetween(pool.min, pool.max);
         const qty = randomInt(10, 200);
         const isWin = Math.random() > 0.42;
 
@@ -149,6 +168,7 @@ async function seed() {
           id: tradeId,
           accountId: account,
           symbol,
+          category: pool.category,
           side,
           status: 'closed',
           openedAt: openTime.getTime(),
