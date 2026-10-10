@@ -5,6 +5,7 @@ import { MarketClock } from './MarketClock';
 import { useAppStore } from '@/stores/appStore';
 import { useFilterStore } from '@/stores/filterStore';
 import { useAccounts } from '@/hooks/useRepositories';
+import { repositories } from '@/repositories';
 import { isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -25,6 +26,8 @@ const pageTitles: Record<string, string> = {
   '/trades': 'Trades',
   '/reports': 'Reports',
   '/notebook': 'Notebook',
+  '/sessions': 'Sessions',
+  '/news': 'News',
   '/import': 'Import Trades',
   '/settings': 'Settings'
 };
@@ -45,7 +48,7 @@ export function TopBar() {
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
     setTheme(next);
-    localStorage.setItem('theme', next);
+    void repositories.settings.update({ theme: next });
   };
 
   const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;

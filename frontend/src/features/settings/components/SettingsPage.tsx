@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAccounts, useTags, useSettings } from '@/hooks/useRepositories';
+import { useState } from 'react';
+import { useAccounts, useTags } from '@/hooks/useRepositories';
 import { repositories } from '@/repositories';
 import { db } from '@/db/database';
 import { generateId } from '@/lib/utils';
@@ -34,7 +34,6 @@ type PendingAction =
 export function SettingsPage() {
   const accounts = useAccounts();
   const tags = useTags();
-  const settings = useSettings();
   const { theme, setTheme } = useAppStore();
 
   const [accountName, setAccountName] = useState('');
@@ -49,12 +48,6 @@ export function SettingsPage() {
 
   const [pending, setPending] = useState<PendingAction>(null);
   const [status, setStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (settings) {
-      useAppStore.getState().setTheme(settings.theme);
-    }
-  }, [settings]);
 
   const handleSetTheme = (next: 'light' | 'dark' | 'system') => {
     setTheme(next);
