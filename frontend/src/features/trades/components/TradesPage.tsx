@@ -186,7 +186,7 @@ export function TradesPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-[200px]"
+          className="w-full sm:w-[200px]"
         />
         <Select value={sideFilter} onValueChange={(v) => { setSideFilter(v); setPage(1); }}>
           <SelectTrigger className="w-[120px]">
@@ -239,7 +239,7 @@ export function TradesPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border bg-primary/5 p-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-primary/5 p-3">
           <span className="text-sm font-medium">{selected.size} selected</span>
           <Select onValueChange={(v) => handleBulkTag(v)}>
             <SelectTrigger className="w-[150px]">
@@ -264,7 +264,7 @@ export function TradesPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[860px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">

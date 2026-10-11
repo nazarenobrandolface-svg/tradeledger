@@ -20,6 +20,23 @@ export function formatPnl(value: number, currency = 'USD'): string {
   return value >= 0 ? `+${formatted}` : `-${formatted}`;
 }
 
+const compactCurrencyFormatters = new Map<string, Intl.NumberFormat>();
+
+/** Compact currency for tight spaces (e.g. calendar cells): "$1.2K", "-$340". */
+export function formatCompactCurrency(value: number, currency = 'USD'): string {
+  let formatter = compactCurrencyFormatters.get(currency);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1
+    });
+    compactCurrencyFormatters.set(currency, formatter);
+  }
+  return formatter.format(value);
+}
+
 export function formatPercent(value: number, decimals = 1): string {
   return `${(value * 100).toFixed(decimals)}%`;
 }

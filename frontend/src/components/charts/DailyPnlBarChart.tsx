@@ -9,7 +9,7 @@ import {
   Cell
 } from 'recharts';
 import { format } from 'date-fns';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCompactCurrency, formatCurrency } from '@/lib/formatters';
 
 interface DailyPnlBarChartProps {
   data: Array<{ date: string; netPnl: number }>;
@@ -35,11 +35,12 @@ export function DailyPnlBarChart({ data, height = 250, currency = 'USD' }: Daily
           axisLine={false}
         />
         <YAxis
+          width={56}
           stroke="hsl(var(--muted-foreground))"
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(v: number) => formatCurrency(v, currency)}
+          tickFormatter={(v: number) => formatCompactCurrency(v, currency)}
         />
         <Tooltip
           contentStyle={{

@@ -26,5 +26,9 @@ export function PnLDisplay({
   const color = value > 0 ? 'text-profit' : value < 0 ? 'text-loss' : 'text-muted-foreground';
   const text = showSign ? formatPnl(value, currency) : formatCurrency(Math.abs(value), currency);
 
-  return <span className={cn(sizeClasses[size], color, className)}>{text}</span>;
+  return (
+    <span className={cn('shrink-0 whitespace-nowrap', sizeClasses[size], color, className)}>
+      {text}
+    </span>
+  );
 }

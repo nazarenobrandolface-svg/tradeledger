@@ -105,7 +105,7 @@ export function CloseTradeDialog({ trade, open, onOpenChange }: CloseTradeDialog
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="close-price">Exit Price *</Label>
             <Input

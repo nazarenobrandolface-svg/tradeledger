@@ -159,7 +159,7 @@ export function TradeFormPage() {
           <CardTitle>Trade Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="symbol">Symbol *</Label>
               <Input
@@ -188,7 +188,7 @@ export function TradeFormPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Side</Label>
               <Select value={side} onValueChange={(v) => setSide(v as 'long' | 'short')}>
@@ -222,7 +222,7 @@ export function TradeFormPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="entry">Planned Entry</Label>
               <Input
@@ -258,7 +258,7 @@ export function TradeFormPage() {
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <CardTitle>Executions</CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => addExecution('entry')}>
@@ -274,8 +274,8 @@ export function TradeFormPage() {
         <CardContent className="space-y-3">
           {errors.executions && <p className="text-xs text-loss">{errors.executions}</p>}
           {executions.map((exec) => (
-            <div key={exec.id} className="flex items-end gap-2 rounded-lg border p-3">
-              <div className="w-24">
+            <div key={exec.id} className="flex flex-wrap items-end gap-2 rounded-lg border p-3">
+              <div className="w-full sm:w-24">
                 <Label className="text-xs">Type</Label>
                 <Select
                   value={exec.type}
@@ -290,7 +290,7 @@ export function TradeFormPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex-1">
+              <div className="w-full min-w-0 sm:w-auto sm:flex-1">
                 <Label className="text-xs">Price</Label>
                 <Input
                   type="number"
@@ -299,7 +299,7 @@ export function TradeFormPage() {
                   onChange={(e) => updateExecution(exec.id, 'price', e.target.value)}
                 />
               </div>
-              <div className="w-24">
+              <div className="w-full sm:w-24">
                 <Label className="text-xs">Qty</Label>
                 <Input
                   type="number"
@@ -307,7 +307,7 @@ export function TradeFormPage() {
                   onChange={(e) => updateExecution(exec.id, 'quantity', e.target.value)}
                 />
               </div>
-              <div className="w-24">
+              <div className="w-full sm:w-24">
                 <Label className="text-xs">Fees</Label>
                 <Input
                   type="number"
@@ -316,7 +316,7 @@ export function TradeFormPage() {
                   onChange={(e) => updateExecution(exec.id, 'fees', e.target.value)}
                 />
               </div>
-              <div className="w-44">
+              <div className="w-full sm:w-44">
                 <Label className="text-xs">Time</Label>
                 <Input
                   type="datetime-local"
@@ -329,6 +329,7 @@ export function TradeFormPage() {
                 size="icon"
                 onClick={() => removeExecution(exec.id)}
                 disabled={executions.length <= 1}
+                className="ml-auto sm:ml-0"
               >
                 <Trash2 className="h-4 w-4 text-loss" />
               </Button>

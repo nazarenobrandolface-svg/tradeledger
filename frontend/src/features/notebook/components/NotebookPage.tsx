@@ -111,7 +111,7 @@ export function NotebookPage() {
   }
 
   return (
-    <div className="grid h-[calc(100vh-140px)] grid-cols-1 gap-4 lg:grid-cols-[200px_300px_1fr]">
+    <div className="grid h-[calc(100dvh-232px)] min-h-[320px] grid-cols-1 gap-4 md:h-[calc(100dvh-148px)] lg:grid-cols-[200px_300px_1fr]">
       {/* Folders — desktop only; on mobile they live behind the note list */}
       <Card className="hidden overflow-hidden lg:block">
         <FolderSidebar

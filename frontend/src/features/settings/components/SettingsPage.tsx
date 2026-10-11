@@ -315,9 +315,9 @@ export function SettingsPage() {
               {accounts.map((account) => (
                 <div
                   key={account.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-semibold">{account.name}</div>
                     <div className="text-sm text-muted-foreground">
                       {account.currency} · Starting: ${account.startingBalance.toLocaleString()} ·{' '}
@@ -343,7 +343,7 @@ export function SettingsPage() {
 
               <Separator />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Account Name</Label>
                   <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} />
@@ -363,7 +363,7 @@ export function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-2 space-y-4">
+                <div className="space-y-4 sm:col-span-2">
                   <AccountSetupFields
                     idPrefix="settings-account"
                     type={accountType}
@@ -409,7 +409,7 @@ export function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Theme</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant={theme === 'light' ? 'default' : 'outline'}
                     size="sm"
@@ -469,13 +469,13 @@ export function SettingsPage() {
 
               <Separator />
 
-              <div className="flex items-end gap-2">
-                <div className="flex-1 space-y-2">
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-0 flex-1 space-y-2">
                   <Label>Tag Name</Label>
                   <Input value={tagName} onChange={(e) => setTagName(e.target.value)} />
                 </div>
                 <Select value={tagCategory} onValueChange={setTagCategory}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -506,7 +506,7 @@ export function SettingsPage() {
               <CardDescription>Export or import your complete trading data</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button onClick={handleExport}>
                   <Download className="h-4 w-4" />
                   Export Backup

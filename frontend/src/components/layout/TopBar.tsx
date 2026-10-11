@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -40,6 +41,7 @@ export function TopBar() {
   const accounts = useAccounts();
   const session = useAuthStore((s) => s.session);
   const signOut = useAuthStore((s) => s.signOut);
+  const isMobile = useIsMobile();
 
   const title =
     pageTitles[location.pathname] ??
@@ -60,11 +62,20 @@ export function TopBar() {
       <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-2 text-sm">
-              {format(dateFrom, 'MMM d')} — {format(dateTo, 'MMM d, yyyy')}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 max-w-full gap-2 text-sm md:w-auto"
+            >
+              <span className="truncate">
+                {format(dateFrom, 'MMM d')} — {format(dateTo, 'MMM d, yyyy')}
+              </span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
+          <PopoverContent
+            className="w-auto max-w-[calc(100vw-2rem)] overflow-x-auto p-0"
+            align="end"
+          >
             <Calendar
               mode="range"
               defaultMonth={new Date(dateFrom)}
@@ -74,7 +85,7 @@ export function TopBar() {
                   setDateRange(range.from.getTime(), range.to.getTime());
                 }
               }}
-              numberOfMonths={2}
+              numberOfMonths={isMobile ? 1 : 2}
             />
           </PopoverContent>
         </Popover>

@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, Fragment } from 'react';
 import { format, startOfMonth, endOfMonth, getDay, isSameMonth, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { formatCurrency, formatTradeCount } from '@/lib/formatters';
+import { formatCompactCurrency, formatCurrency, formatTradeCount } from '@/lib/formatters';
 import type { DayPnl } from '@/lib/metrics';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 interface MonthlyCalendarProps {
   dailyPnl: DayPnl[];
@@ -15,6 +16,9 @@ interface MonthlyCalendarProps {
 
 export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: MonthlyCalendarProps) {
   const [month, setMonth] = useState(new Date());
+  const isMobile = useIsMobile();
+  const formatCellCurrency = (value: number) =>
+    isMobile ? formatCompactCurrency(value, currency) : formatCurrency(value, currency);
 
   const { weeks, monthTotal, monthTrades } = useMemo(() => {
     const monthStart = startOfMonth(month);
@@ -71,7 +75,7 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
         </Button>
       </div>
 
-      <div className="grid grid-cols-8 gap-1 text-xs">
+      <div className="grid grid-cols-7 gap-1 text-xs sm:grid-cols-8">
         <div className="py-1 text-center font-medium text-muted-foreground">Mon</div>
         <div className="py-1 text-center font-medium text-muted-foreground">Tue</div>
         <div className="py-1 text-center font-medium text-muted-foreground">Wed</div>
@@ -79,7 +83,9 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
         <div className="py-1 text-center font-medium text-muted-foreground">Fri</div>
         <div className="py-1 text-center font-medium text-muted-foreground">Sat</div>
         <div className="py-1 text-center font-medium text-muted-foreground">Sun</div>
-        <div className="py-1 text-center font-medium text-muted-foreground">Total</div>
+        <div className="hidden py-1 text-center font-medium text-muted-foreground sm:block">
+          Total
+        </div>
 
         {weeks.map((week, wi) => {
           const weekTotal = week
@@ -90,7 +96,7 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
             .reduce((s, d) => s + (d.data?.tradeCount ?? 0), 0);
 
           return (
-            <>
+            <Fragment key={wi}>
               {week.map((day, di) => {
                 const pnl = day.inMonth ? (day.data?.netPnl ?? 0) : 0;
                 const trades = day.inMonth ? (day.data?.tradeCount ?? 0) : 0;
@@ -106,8 +112,13 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
                       }
                     }}
                     disabled={!day.inMonth || trades === 0}
+                    aria-label={`${format(day.date, 'MMMM d, yyyy')}${
+                      trades > 0
+                        ? `, ${formatTradeCount(trades)}, ${formatCurrency(pnl, currency)}`
+                        : ''
+                    }`}
                     className={cn(
-                      'min-h-[48px] rounded-md p-1 text-left transition-colors',
+                      'min-h-[40px] rounded-md p-1 text-left transition-colors sm:min-h-[48px]',
                       !day.inMonth && 'opacity-30',
                       day.inMonth && trades > 0 && 'cursor-pointer hover:opacity-80',
                       isProfit && 'bg-profit/10',
@@ -122,15 +133,15 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
                       <>
                         <div
                           className={cn(
-                            'text-[10px] font-semibold',
+                            'truncate text-[10px] font-semibold',
                             isProfit && 'text-profit',
                             isLoss && 'text-loss'
                           )}
                         >
-                          {formatCurrency(pnl, currency)}
+                          {formatCellCurrency(pnl)}
                         </div>
-                        <div className="text-[9px] text-muted-foreground">
-                          {formatTradeCount(trades)}
+                        <div className="truncate text-[9px] text-muted-foreground">
+                          {isMobile ? `${trades}` : formatTradeCount(trades)}
                         </div>
                       </>
                     )}
@@ -139,27 +150,27 @@ export function MonthlyCalendar({ dailyPnl, currency = 'USD', onDayClick }: Mont
               })}
               <div
                 className={cn(
-                  'flex min-h-[48px] flex-col justify-center rounded-md bg-muted/50 p-1 text-center',
+                  'hidden min-h-[48px] flex-col justify-center rounded-md bg-muted/50 p-1 text-center sm:flex',
                   weekTotal > 0 && 'bg-profit/5',
                   weekTotal < 0 && 'bg-loss/5'
                 )}
               >
                 <div
                   className={cn(
-                    'text-[10px] font-semibold',
+                    'truncate text-[10px] font-semibold',
                     weekTotal > 0 && 'text-profit',
                     weekTotal < 0 && 'text-loss'
                   )}
                 >
-                  {weekTrades > 0 ? formatCurrency(weekTotal, currency) : ''}
+                  {weekTrades > 0 ? formatCellCurrency(weekTotal) : ''}
                 </div>
                 {weekTrades > 0 && (
-                  <div className="text-[9px] text-muted-foreground">
-                    {formatTradeCount(weekTrades)}
+                  <div className="truncate text-[9px] text-muted-foreground">
+                    {isMobile ? `${weekTrades}` : formatTradeCount(weekTrades)}
                   </div>
                 )}
               </div>
-            </>
+            </Fragment>
           );
         })}
       </div>

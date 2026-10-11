@@ -8,7 +8,7 @@ import {
   CartesianGrid
 } from 'recharts';
 import { format } from 'date-fns';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCompactCurrency, formatCurrency } from '@/lib/formatters';
 
 interface EquityAreaChartProps {
   data: Array<{ date: number; value: number }>;
@@ -44,11 +44,12 @@ export function EquityAreaChart({ data, height = 300, currency = 'USD' }: Equity
           axisLine={false}
         />
         <YAxis
+          width={56}
           stroke="hsl(var(--muted-foreground))"
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(v: number) => formatCurrency(v, currency)}
+          tickFormatter={(v: number) => formatCompactCurrency(v, currency)}
         />
         <Tooltip
           contentStyle={{

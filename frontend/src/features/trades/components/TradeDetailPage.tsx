@@ -106,7 +106,7 @@ export function TradeDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" onClick={() => navigate('/trades')}>
           <ArrowLeft className="h-4 w-4" />
           Back to Trades
@@ -127,7 +127,7 @@ export function TradeDetailPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardHeader className="flex-col items-start gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-2xl">{trade.symbol}</CardTitle>
               <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
@@ -146,7 +146,7 @@ export function TradeDetailPage() {
                 )}
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <PnLDisplay value={pnl} size="xl" />
               {r !== null && (
                 <div className={`text-sm font-medium ${r >= 0 ? 'text-profit' : 'text-loss'}`}>
@@ -200,7 +200,7 @@ export function TradeDetailPage() {
             </div>
 
             {trade.plannedStop && (
-              <div className="mt-4 grid grid-cols-3 gap-4 rounded-lg bg-muted/50 p-3 text-sm">
+              <div className="mt-4 grid grid-cols-1 gap-3 rounded-lg bg-muted/50 p-3 text-sm sm:grid-cols-3 sm:gap-4">
                 <div>
                   <div className="text-xs text-muted-foreground">Planned Entry</div>
                   <div className="font-medium">${trade.plannedEntry?.toFixed(2) ?? '—'}</div>

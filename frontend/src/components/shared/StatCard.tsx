@@ -28,20 +28,25 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <Card className={cn('transition-shadow hover:shadow-card-hover', className)}>
-      <CardContent className="flex items-center justify-between p-5">
-        <div className="space-y-1.5">
+      <CardContent className="flex items-center justify-between gap-3 p-5">
+        <div className="min-w-0 space-y-1.5">
           <div className="flex items-center gap-1.5">
             <span className="text-sm text-muted-foreground">{label}</span>
             {tooltip && <InfoTooltip content={tooltip} />}
           </div>
           {isPnl && typeof value === 'number' ? (
-            <PnLDisplay value={value} currency={currency} size="lg" />
+            <PnLDisplay
+              value={value}
+              currency={currency}
+              size="lg"
+              className="block shrink truncate"
+            />
           ) : (
-            <div className="text-2xl font-bold">{value}</div>
+            <div className="truncate text-2xl font-bold">{value}</div>
           )}
         </div>
         {(gauge || icon) && (
-          <div className="flex h-12 w-12 items-center justify-center">{gauge ?? icon}</div>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center">{gauge ?? icon}</div>
         )}
       </CardContent>
     </Card>

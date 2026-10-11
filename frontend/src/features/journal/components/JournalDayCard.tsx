@@ -125,7 +125,7 @@ export function JournalDayCard({ day, currency = 'USD' }: JournalDayCardProps) {
                     onClick={() => navigate(`/trades/${trade.id}`)}
                     className="flex w-full items-center justify-between rounded-lg border p-2.5 text-left text-sm hover:bg-muted/50"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="font-semibold">{trade.symbol}</span>
                       <span className={trade.side === 'long' ? 'text-profit' : 'text-loss'}>
                         {trade.side === 'long' ? 'LONG' : 'SHORT'}

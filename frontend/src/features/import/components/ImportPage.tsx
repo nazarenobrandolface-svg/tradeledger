@@ -168,7 +168,7 @@ export function ImportPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <span className={step === 'upload' ? 'font-semibold text-foreground' : ''}>1. Upload</span>
         <ArrowRight className="h-3 w-3" />
         <span className={step === 'map' ? 'font-semibold text-foreground' : ''}>2. Map Columns</span>
@@ -255,7 +255,10 @@ export function ImportPage() {
             </div>
 
             {CSV_FIELDS.filter((f) => f.value !== 'ignore').map((field) => (
-              <div key={field.value} className="grid grid-cols-[200px_1fr] items-center gap-4">
+              <div
+                key={field.value}
+                className="grid grid-cols-1 gap-1 sm:grid-cols-[200px_1fr] sm:items-center sm:gap-4"
+              >
                 <Label>{field.label}</Label>
                 <Select
                   value={mapping[field.value] ?? 'ignore'}
@@ -278,8 +281,8 @@ export function ImportPage() {
               </div>
             ))}
 
-            <div className="flex items-end gap-2 border-t pt-4">
-              <div className="flex-1 space-y-2">
+            <div className="flex flex-wrap items-end gap-2 border-t pt-4">
+              <div className="min-w-0 flex-1 space-y-2">
                 <Label>Save as template</Label>
                 <Input
                   value={templateName}
@@ -287,12 +290,17 @@ export function ImportPage() {
                   placeholder="Template name"
                 />
               </div>
-              <Button variant="outline" onClick={handleSaveTemplate} disabled={!templateName.trim()}>
+              <Button
+                variant="outline"
+                onClick={handleSaveTemplate}
+                disabled={!templateName.trim()}
+                className="w-full sm:w-auto"
+              >
                 Save Template
               </Button>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex flex-wrap justify-between gap-2">
               <Button variant="outline" onClick={() => setStep('upload')}>
                 <ArrowLeft className="h-4 w-4" />
                 Back
@@ -341,7 +349,7 @@ export function ImportPage() {
                 {importError}
               </p>
             )}
-            <div className="flex justify-between">
+            <div className="flex flex-wrap justify-between gap-2">
               <Button variant="outline" onClick={() => setStep('map')}>
                 <ArrowLeft className="h-4 w-4" />
                 Back

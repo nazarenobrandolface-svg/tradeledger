@@ -39,19 +39,21 @@ export function DayDetailDrawer({ date, trades, currency = 'USD', onClose }: Day
       aria-label={format(new Date(date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
     >
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-      <div className="relative h-full w-full max-w-md animate-in slide-in-from-right bg-background shadow-xl">
-        <div className="flex items-center justify-between border-b p-4">
-          <h2 className="font-semibold">{format(new Date(date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}</h2>
+      <div className="relative flex h-full w-full max-w-md flex-col animate-in slide-in-from-right bg-background shadow-xl">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b p-4">
+          <h2 className="min-w-0 truncate font-semibold">
+            {format(new Date(date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
+          </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 hover:bg-muted"
+            className="shrink-0 rounded-md p-1 hover:bg-muted"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="h-[calc(100%-65px)] overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
