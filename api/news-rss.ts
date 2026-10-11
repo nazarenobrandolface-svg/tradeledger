@@ -1,4 +1,7 @@
-import { serveFeed } from './_lib/feed';
+// ESM (package.json "type": "module") requires the explicit .js extension on
+// relative imports — extensionless ones crash the lambda with
+// ERR_MODULE_NOT_FOUND at import time (production 500).
+import { serveFeed } from './_lib/feed.js';
 
 /**
  * Google News RSS (forex headlines) for the News page. Proxied and cached

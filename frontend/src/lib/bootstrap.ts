@@ -1,14 +1,13 @@
 import { db } from '@/db/database';
-import { seed } from '@/db/seed';
-import { repositories } from '@/repositories';
+import { purgeDemoData } from '@/lib/demoData';
 import { applyPendingSignupAccount } from '@/lib/pendingAccount';
 import { useAppStore } from '@/stores/appStore';
 
 /**
- * First-run bootstrap: theme sync, the account collected at signup, and demo
- * data for an otherwise empty database. Runs once the user is known — with
- * auth configured it must not seed demo data while sitting on the login page,
- * otherwise the demo accounts would shadow the signup account.
+ * First-run bootstrap: theme sync, the account collected at signup, and a
+ * one-time cleanup of demo data left behind by older versions. Runs once the
+ * user is known — with auth configured it must not touch anything while
+ * sitting on the login page.
  */
 export async function bootstrapApp(): Promise<void> {
   const settings = await db.settings.get('app');
@@ -17,18 +16,8 @@ export async function bootstrapApp(): Promise<void> {
   if (settings?.theme && settings.theme !== useAppStore.getState().theme) {
     useAppStore.getState().setTheme(settings.theme);
   }
-  // The signup account replaces the default (demo) account.
   if (await applyPendingSignupAccount()) return;
-  if (settings?.seeded) return;
-  // Only seed a truly empty database. Never clear existing user data.
-  const [accountCount, tradeCount, noteCount] = await Promise.all([
-    db.accounts.count(),
-    db.trades.count(),
-    db.notes.count()
-  ]);
-  if (accountCount > 0 || tradeCount > 0 || noteCount > 0) {
-    await repositories.settings.update({ seeded: true });
-    return;
-  }
-  await seed();
+  // Older versions seeded ~300 demo trades into first-run databases. The
+  // seeder is gone; purge anything it left behind (no-op on real user data).
+  await purgeDemoData().catch((err) => console.error('Demo data cleanup failed', err));
 }

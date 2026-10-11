@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 export function UpdateToast() {
   const [showToast, setShowToast] = useState(false);
+  const updateSWRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
     if (import.meta.env.PROD) {
       import('virtual:pwa-register').then(({ registerSW }) => {
-        registerSW({
+        updateSWRef.current = registerSW({
           onNeedRefresh() {
             setShowToast(true);
           },
@@ -22,7 +23,15 @@ export function UpdateToast() {
   }, []);
 
   const handleUpdate = () => {
-    window.location.reload();
+    setShowToast(false);
+    // A plain location.reload() leaves the new worker in the "waiting" state,
+    // so the same prompt reappears after every refresh. updateSW(true) sends
+    // SKIP_WAITING to the waiting worker and reloads once it takes over.
+    if (updateSWRef.current) {
+      void updateSWRef.current(true);
+    } else {
+      window.location.reload();
+    }
   };
 
   if (!showToast) return null;

@@ -1,4 +1,5 @@
-import { serveFeed } from './_lib/feed';
+// ESM requires the explicit .js extension on relative imports (see news-rss.ts).
+import { serveFeed } from './_lib/feed.js';
 
 /**
  * Forex Factory economic calendar (this week) for the News page. Proxied and

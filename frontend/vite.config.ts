@@ -48,6 +48,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
+        // Once the user accepts an update (SKIP_WAITING), the new worker must
+        // take control of open clients — otherwise the reload races with the
+        // old worker and the update prompt can reappear.
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

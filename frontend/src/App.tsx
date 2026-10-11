@@ -63,8 +63,9 @@ export default function App() {
       start();
       return;
     }
-    // Wait for auth resolution — and for a session, so demo data is never
-    // seeded for someone who is still looking at the login page.
+    // Wait for auth resolution — and for a session — before bootstrapping,
+    // so first-run setup never runs while the user is still looking at the
+    // login page.
     const unsubscribe = useAuthStore.subscribe((state) => {
       if (state.initialized && state.session) start();
     });

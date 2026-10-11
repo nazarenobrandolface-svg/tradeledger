@@ -30,7 +30,6 @@ type PendingAction =
   | { kind: 'tag'; id: string }
   | { kind: 'import'; data: Record<string, unknown> }
   | { kind: 'clear' }
-  | { kind: 'reseed' }
   | null;
 
 export function SettingsPage() {
@@ -226,8 +225,6 @@ export function SettingsPage() {
 
   const handleClearData = () => setPending({ kind: 'clear' });
 
-  const handleReseed = () => setPending({ kind: 'reseed' });
-
   const confirmPending = async () => {
     if (!pending) return;
     switch (pending.kind) {
@@ -241,13 +238,6 @@ export function SettingsPage() {
         await runImport(pending.data);
         break;
       case 'clear':
-        await db.delete();
-        window.location.reload();
-        return;
-      case 'reseed':
-        // Wipe and reload: App's first-run check sees an empty database and
-        // seeds a fresh demo dataset. Calling seed() directly would append a
-        // second copy of the demo trades on top of the existing ones.
         await db.delete();
         window.location.reload();
         return;
@@ -282,13 +272,6 @@ export function SettingsPage() {
           description:
             'Every trade, note, account and setting will be permanently deleted. This cannot be undone.',
           confirmLabel: 'Delete everything'
-        };
-      case 'reseed':
-        return {
-          title: 'Replace data with demo data?',
-          description:
-            'Your current trades, notes and tags will be replaced with ~300 demo trades. This cannot be undone.',
-          confirmLabel: 'Re-seed demo data'
         };
       default:
         return null;
@@ -526,18 +509,6 @@ export function SettingsPage() {
 
               <div className="space-y-3">
                 <div>
-                  <h4 className="font-medium">Demo Data</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Generate ~300 realistic trades over 6 months
-                  </p>
-                  <Button variant="outline" className="mt-2" onClick={handleReseed}>
-                    Re-seed Demo Data
-                  </Button>
-                </div>
-
-                <Separator />
-
-                <div>
                   <h4 className="font-medium text-loss">Danger Zone</h4>
                   <p className="text-sm text-muted-foreground">
                     Permanently delete all data. This cannot be undone.
@@ -559,7 +530,7 @@ export function SettingsPage() {
           title={pendingDialog.title}
           description={pendingDialog.description}
           confirmLabel={pendingDialog.confirmLabel}
-          destructive={pending.kind !== 'import' && pending.kind !== 'reseed'}
+          destructive={pending.kind !== 'import'}
           onConfirm={() => void confirmPending()}
           onCancel={() => setPending(null)}
         />

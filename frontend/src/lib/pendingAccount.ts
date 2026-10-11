@@ -54,11 +54,11 @@ function readPendingAccount(): PendingAccount | null {
 
 /**
  * Creates the signup account as the user's default trading account. Runs
- * before the demo seed so the user's own account replaces the default demo
- * account (and no fake demo trades are attached to it).
+ * before any other bootstrap work so first-run setup only ever touches a
+ * truly empty database.
  *
- * Returns true when it handled first-run setup and the demo seed should be
- * skipped.
+ * Returns true when it handled first-run setup and the rest of the bootstrap
+ * should be skipped.
  */
 export async function applyPendingSignupAccount(): Promise<boolean> {
   const pending = readPendingAccount();
