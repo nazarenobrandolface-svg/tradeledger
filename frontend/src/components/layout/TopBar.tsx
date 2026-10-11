@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Plus, Moon, Sun, Monitor, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,15 +45,14 @@ export function TopBar() {
   const signOut = useAuthStore((s) => s.signOut);
   const isMobile = useIsMobile();
 
-  // Default to the user's (created) account instead of "All Accounts".
-  // Runs once per app load; an explicit "All Accounts" choice is respected.
-  const autoSelectedRef = useRef(false);
+  // Always keep a real account selected (no "All Accounts" aggregate view):
+  // fall back to the default account whenever the selection is missing or
+  // points at a deleted account.
   useEffect(() => {
-    if (!autoSelectedRef.current && accountId === null && defaultAccount) {
-      autoSelectedRef.current = true;
-      setAccountId(defaultAccount.id);
-    }
-  }, [accountId, defaultAccount, setAccountId]);
+    if (accounts.length === 0) return;
+    if (accountId && accounts.some((a) => a.id === accountId)) return;
+    if (defaultAccount) setAccountId(defaultAccount.id);
+  }, [accounts, accountId, defaultAccount, setAccountId]);
 
   const title =
     pageTitles[location.pathname] ??
@@ -103,14 +102,13 @@ export function TopBar() {
         </Popover>
 
         <Select
-          value={accountId ?? 'all'}
-          onValueChange={(v) => setAccountId(v === 'all' ? null : v)}
+          value={accountId ?? defaultAccount?.id ?? ''}
+          onValueChange={(v) => setAccountId(v)}
         >
           <SelectTrigger className="h-9 w-[130px] text-sm md:w-[160px]">
-            <SelectValue placeholder="All Accounts" />
+            <SelectValue placeholder="No accounts" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Accounts</SelectItem>
             {accounts.map((a) => (
               <SelectItem key={a.id} value={a.id}>
                 {a.name}
