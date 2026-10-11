@@ -24,7 +24,10 @@ export default defineConfig({
     feedProxyPlugin(),
     react(),
     VitePWA({
-      registerType: 'prompt',
+      // Silent background updates — no "update available" prompt. The new
+      // worker skip-waits and claims clients as soon as it installs, so
+      // users always run the latest app without any interaction.
+      registerType: 'autoUpdate',
       includeAssets: ['icons/favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'TradeLedger',
@@ -48,9 +51,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
-        // Once the user accepts an update (SKIP_WAITING), the new worker must
-        // take control of open clients — otherwise the reload races with the
-        // old worker and the update prompt can reappear.
+        // autoUpdate already implies skipWaiting + clientsClaim; kept
+        // explicit so the new worker always takes over open clients.
         clientsClaim: true,
         runtimeCaching: [
           {

@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
-import { UpdateToast } from '@/components/pwa/UpdateToast';
 import { initTheme } from '@/stores/appStore';
 import { initAuth, useAuthStore } from '@/stores/authStore';
 import { isSupabaseConfigured } from '@/lib/supabaseClient';
@@ -103,7 +102,6 @@ export default function App() {
         </Route>
       </Routes>
       <InstallPrompt />
-      <UpdateToast />
     </BrowserRouter>
   );
 }

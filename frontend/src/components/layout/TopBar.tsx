@@ -1,10 +1,11 @@
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Plus, Moon, Sun, Monitor, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MarketClock } from './MarketClock';
 import { useAppStore } from '@/stores/appStore';
 import { useFilterStore } from '@/stores/filterStore';
-import { useAccounts } from '@/hooks/useRepositories';
+import { useAccounts, useDefaultAccount } from '@/hooks/useRepositories';
 import { repositories } from '@/repositories';
 import { isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/stores/authStore';
@@ -39,9 +40,20 @@ export function TopBar() {
   const { theme, setTheme } = useAppStore();
   const { dateFrom, dateTo, setDateRange, accountId, setAccountId } = useFilterStore();
   const accounts = useAccounts();
+  const defaultAccount = useDefaultAccount();
   const session = useAuthStore((s) => s.session);
   const signOut = useAuthStore((s) => s.signOut);
   const isMobile = useIsMobile();
+
+  // Default to the user's (created) account instead of "All Accounts".
+  // Runs once per app load; an explicit "All Accounts" choice is respected.
+  const autoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (!autoSelectedRef.current && accountId === null && defaultAccount) {
+      autoSelectedRef.current = true;
+      setAccountId(defaultAccount.id);
+    }
+  }, [accountId, defaultAccount, setAccountId]);
 
   const title =
     pageTitles[location.pathname] ??
